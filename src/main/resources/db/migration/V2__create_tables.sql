@@ -47,7 +47,7 @@ CREATE TABLE advertisements
     title       VARCHAR(200) NOT NULL,
     description TEXT,
     price       NUMERIC(15, 2),
-    status      ad_status    NOT NULL DEFAULT 'ACTIVE',
+    status      advertisement_status    NOT NULL DEFAULT 'ACTIVE',
     author_id   BIGINT       NOT NULL,
     category_id BIGINT,
     created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
@@ -70,16 +70,16 @@ CREATE TABLE advertisements
 CREATE TABLE images
 (
     id          BIGSERIAL PRIMARY KEY,
-    ad_id       BIGINT       NOT NULL,
+    advertisement_id       BIGINT       NOT NULL,
     url         VARCHAR(500) NOT NULL,
     sort_order  INTEGER      NOT NULL DEFAULT 0,
     uploaded_at TIMESTAMP    NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT fk_images_ad_id
-        FOREIGN KEY (ad_id) REFERENCES advertisements (id) ON DELETE CASCADE,
+    CONSTRAINT fk_images_advertisement_id
+        FOREIGN KEY (advertisement_id) REFERENCES advertisements (id) ON DELETE CASCADE,
 
-    CONSTRAINT ak_images_ad_sort
-        UNIQUE (ad_id, sort_order),
+    CONSTRAINT ak_images_advertisement_sort
+        UNIQUE (advertisement_id, sort_order),
 
     CONSTRAINT chk_images_url
         CHECK (length(trim(url)) > 0),
@@ -91,30 +91,16 @@ CREATE TABLE images
 CREATE TABLE comments
 (
     id         BIGSERIAL PRIMARY KEY,
-    ad_id      BIGINT    NOT NULL,
+    advertisement_id      BIGINT    NOT NULL,
     author_id  BIGINT    NOT NULL,
     text       TEXT      NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_comments_ad_id
-        FOREIGN KEY (ad_id) REFERENCES advertisements (id) ON DELETE CASCADE,
+        FOREIGN KEY (advertisement_id) REFERENCES advertisements (id) ON DELETE CASCADE,
     CONSTRAINT fk_comments_author_id
         FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE,
 
     CONSTRAINT chk_comments_text
         CHECK (length(trim(text)) > 0)
-);
-
--- Уведомления
-CREATE TABLE notifications
-(
-    id         BIGSERIAL PRIMARY KEY,
-    user_id    BIGINT            NOT NULL,
-    type       notification_type NOT NULL,
-    message    TEXT              NOT NULL,
-    is_sent    BOOLEAN           NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP         NOT NULL DEFAULT NOW(),
-
-    CONSTRAINT fk_notifications_user_id
-        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
