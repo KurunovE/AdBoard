@@ -6,9 +6,7 @@ CREATE TABLE users
     email         VARCHAR(255) NOT NULL,
     phone         VARCHAR(20),
     password VARCHAR(255) NOT NULL,
-    role          user_role    NOT NULL DEFAULT 'USER',
-    is_active     BOOLEAN      NOT NULL DEFAULT FALSE,
-    created_at    TIMESTAMP    NOT NULL DEFAULT NOW(),
+    role          user_role    DEFAULT 'USER',
 
     CONSTRAINT ak_users_email
         UNIQUE (email),

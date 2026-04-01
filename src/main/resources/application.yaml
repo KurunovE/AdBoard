@@ -20,3 +20,14 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9090/realms/adboard
+          jwk-set-uri: http://localhost:9090/realms/adboard/protocol/openid-connect/certs
+
+logging:
+  level:
+    org.springframework.security: DEBUG

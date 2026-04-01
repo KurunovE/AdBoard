@@ -1,6 +1,5 @@
 package com.solarlab.adboard.model;
 
-import com.solarlab.adboard.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,10 +30,6 @@ public class User {
 
     @Column(name = "password", nullable = false)
     private String password;
-
-    @Column(name = "role")
-    @Enumerated(EnumType.STRING)
-    private Role role = Role.USER;
 
     @OneToMany(
             mappedBy = "author",
@@ -70,7 +65,6 @@ public class User {
                 + ", name='" + name + '\''
                 + ", email='" + email + '\''
                 + ", phone='" + phone + '\''
-                + ", role=" + role
                 + '}';
     }
 }

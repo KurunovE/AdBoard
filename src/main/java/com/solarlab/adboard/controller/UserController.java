@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -38,5 +39,17 @@ public class UserController {
             @Valid @RequestBody UpdateUserRequest updateUserRequest
     ) {
         return ResponseEntity.ok(userService.updateUser(id, updateUserRequest));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/delete/{id}")
+    public void deleteUser(@PathVariable(name = "id") Long id) {
+        userService.deleteUser(id);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin-only")
+    public ResponseEntity<String> testAdminEndpoint() {
+        return ResponseEntity.ok("Hello Admin!");
     }
 }

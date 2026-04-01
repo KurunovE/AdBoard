@@ -1,8 +1,10 @@
 package com.solarlab.adboard.service;
 
 import com.solarlab.adboard.dto.request.UpdateUserRequest;
+import com.solarlab.adboard.dto.request.UserRequestRegistration;
 import com.solarlab.adboard.dto.request.UserTestRequest;
 import com.solarlab.adboard.dto.response.UserResponse;
+import com.solarlab.adboard.dto.response.UserResponseRegistration;
 import com.solarlab.adboard.dto.response.UserTestResponse;
 import com.solarlab.adboard.mapper.UserMapper;
 import com.solarlab.adboard.model.User;
@@ -53,5 +55,23 @@ public class UserService {
         return userMapper.toUserResponse(updatedUser);
     }
 
+    @Transactional
+    public UserResponseRegistration registerUser(UserRequestRegistration userRequestRegistration) {
 
+        User newUser = User.builder()
+                .name(userRequestRegistration.name())
+                .email(userRequestRegistration.email())
+                .phone(userRequestRegistration.phone())
+                .password(userRequestRegistration.password())
+                .build();
+
+        User savedUser = userRepository.save(newUser);
+
+        return userMapper.toUserResponseRegistration(savedUser);
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
 }
