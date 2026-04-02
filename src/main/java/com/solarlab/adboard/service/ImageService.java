@@ -1,4 +1,4 @@
 package com.solarlab.adboard.service;
 
-public class ImageService {
+public interface ImageService {
 }

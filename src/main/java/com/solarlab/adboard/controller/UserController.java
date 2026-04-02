@@ -33,6 +33,7 @@ public class UserController {
         return ResponseEntity.ok(userService.findUser(id));
     }
 
+    @PreAuthorize("@securityUtils.isOwner(#id)")
     @PostMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable(name = "id") @PositiveOrZero Long id,

@@ -1,7 +1,10 @@
 package com.solarlab.adboard.controller;
 
+import com.solarlab.adboard.dto.request.LoginRequest;
 import com.solarlab.adboard.dto.request.UserRequestRegistration;
+import com.solarlab.adboard.dto.response.LoginResponse;
 import com.solarlab.adboard.dto.response.UserResponseRegistration;
+import com.solarlab.adboard.service.AuthService;
 import com.solarlab.adboard.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final UserService userService;
+    private final AuthService authService;
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest loginRequest
+    ) {
+        return ResponseEntity.ok(authService.login(loginRequest));
+    }
 
     @PostMapping("/register")
     public ResponseEntity<UserResponseRegistration> register(

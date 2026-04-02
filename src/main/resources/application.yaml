@@ -28,6 +28,11 @@ spring:
           issuer-uri: http://localhost:9090/realms/adboard
           jwk-set-uri: http://localhost:9090/realms/adboard/protocol/openid-connect/certs
 
+jwt:
+  auth:
+    converter:
+      resource-id: adboard-client
+
 logging:
   level:
     org.springframework.security: DEBUG
