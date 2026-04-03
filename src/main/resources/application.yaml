@@ -36,3 +36,8 @@ jwt:
 logging:
   level:
     org.springframework.security: DEBUG
+
+yandex:
+  disk:
+    token: ${YANDEX_DISK_TOKEN:your_default_token_here}
+    api-url: https://cloud-api.yandex.net/v1/disk/resources

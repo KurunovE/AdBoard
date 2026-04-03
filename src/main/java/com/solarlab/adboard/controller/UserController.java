@@ -1,9 +1,7 @@
 package com.solarlab.adboard.controller;
 
 import com.solarlab.adboard.dto.request.UpdateUserRequest;
-import com.solarlab.adboard.dto.request.UserTestRequest;
 import com.solarlab.adboard.dto.response.UserResponse;
-import com.solarlab.adboard.dto.response.UserTestResponse;
 import com.solarlab.adboard.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -19,24 +17,17 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping("/test")
-    public ResponseEntity<UserTestResponse> testEndpoint(
-            @Valid @RequestBody UserTestRequest userTestRequest
-    ) {
-        return ResponseEntity.ok(userService.getUserTestResponse(userTestRequest));
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUser(
-            @PathVariable(name = "id") @PositiveOrZero Long id
+            @PositiveOrZero @PathVariable(name = "id") Long id
     ) {
-        return ResponseEntity.ok(userService.findUser(id));
+        return ResponseEntity.ok(userService.findUserById(id));
     }
 
     @PreAuthorize("@securityUtils.isOwner(#id)")
     @PostMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(
-            @PathVariable(name = "id") @PositiveOrZero Long id,
+            @PositiveOrZero @PathVariable(name = "id") Long id,
             @Valid @RequestBody UpdateUserRequest updateUserRequest
     ) {
         return ResponseEntity.ok(userService.updateUser(id, updateUserRequest));
@@ -44,13 +35,9 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{id}")
-    public void deleteUser(@PathVariable(name = "id") Long id) {
+    public void deleteUser(
+            @PositiveOrZero @PathVariable(name = "id") Long id
+    ) {
         userService.deleteUser(id);
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin-only")
-    public ResponseEntity<String> testAdminEndpoint() {
-        return ResponseEntity.ok("Hello Admin!");
     }
 }

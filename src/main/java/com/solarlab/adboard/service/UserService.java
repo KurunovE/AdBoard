@@ -1,11 +1,7 @@
 package com.solarlab.adboard.service;
 
 import com.solarlab.adboard.dto.request.UpdateUserRequest;
-import com.solarlab.adboard.dto.request.UserRequestRegistration;
-import com.solarlab.adboard.dto.request.UserTestRequest;
 import com.solarlab.adboard.dto.response.UserResponse;
-import com.solarlab.adboard.dto.response.UserResponseRegistration;
-import com.solarlab.adboard.dto.response.UserTestResponse;
 import com.solarlab.adboard.mapper.UserMapper;
 import com.solarlab.adboard.model.User;
 import com.solarlab.adboard.repository.UserRepository;
@@ -21,16 +17,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    public UserTestResponse getUserTestResponse(UserTestRequest userTestRequest) {
-        return UserTestResponse.builder()
-                .name(userTestRequest.name())
-                .email(userTestRequest.email())
-                .phone(userTestRequest.phone())
-                .password(userTestRequest.password())
-                .build();
-    }
-
-    public UserResponse findUser(Long id) {
+    @Transactional(readOnly = true)
+    public UserResponse findUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "User with id " + id + " not found"
@@ -56,22 +44,10 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponseRegistration registerUser(UserRequestRegistration userRequestRegistration) {
-
-        User newUser = User.builder()
-                .name(userRequestRegistration.name())
-                .email(userRequestRegistration.email())
-                .phone(userRequestRegistration.phone())
-                .password(userRequestRegistration.password())
-                .build();
-
-        User savedUser = userRepository.save(newUser);
-
-        return userMapper.toUserResponseRegistration(savedUser);
-    }
-
-    @Transactional
     public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new EntityNotFoundException("User with id " + id + " not found");
+        }
         userRepository.deleteById(id);
     }
 }

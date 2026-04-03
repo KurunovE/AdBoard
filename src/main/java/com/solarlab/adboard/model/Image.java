@@ -25,6 +25,9 @@ public class Image {
     @Column(name = "url", nullable = false, length = 500)
     private String url;
 
+    @Column(name = "path", nullable = false, length = 500)
+    private String path;
+
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;
 
@@ -54,6 +57,7 @@ public class Image {
         return "Image{"
                 + "id=" + id
                 + ", advertisement_id=" + advertisement.getId()
+                + ", path='" + path + '\''
                 + ", url='" + url + '\''
                 + ", sort_order=" + sortOrder
                 + ", uploaded_at=" + uploadedAt

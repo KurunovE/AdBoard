@@ -70,6 +70,7 @@ CREATE TABLE images
     id          BIGSERIAL PRIMARY KEY,
     advertisement_id       BIGINT       NOT NULL,
     url         VARCHAR(500) NOT NULL,
+    path        VARCHAR(500) NOT NULL,
     sort_order  INTEGER      NOT NULL DEFAULT 0,
     uploaded_at TIMESTAMP    NOT NULL DEFAULT NOW(),
 
@@ -81,6 +82,8 @@ CREATE TABLE images
 
     CONSTRAINT chk_images_url
         CHECK (length(trim(url)) > 0),
+    CONSTRAINT chk_images_path
+        CHECK (length(trim(path)) > 0),
     CONSTRAINT chk_images_sort_order
         CHECK (sort_order >= 0)
 );
