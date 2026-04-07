@@ -20,6 +20,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+    open-in-view: false
 
   security:
     oauth2:
@@ -39,5 +40,5 @@ logging:
 
 yandex:
   disk:
-    token: ${YANDEX_DISK_TOKEN:your_default_token_here}
+    token: ${YANDEX_DISK_TOKEN:y0__xD23eiqBRj8_T8gvIWy_xYwyvPU0AjaOcdQEeUNu-MXXpaSw0V2ZbuSHg}
     api-url: https://cloud-api.yandex.net/v1/disk/resources

@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.findCategoryById(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
     public ResponseEntity<CategoryResponse> createCategory(
             @Valid @RequestBody CategoryRequest categoryRequest
@@ -37,9 +39,12 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.createCategory(categoryRequest));
     }
 
-    public void deleteCategory(
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<Void> deleteCategory(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {
         categoryService.deleteCategory(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -5,7 +5,6 @@ import com.solarlab.adboard.dto.request.UserRequestRegistration;
 import com.solarlab.adboard.dto.response.LoginResponse;
 import com.solarlab.adboard.dto.response.UserResponseRegistration;
 import com.solarlab.adboard.service.AuthService;
-import com.solarlab.adboard.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +31,6 @@ public class AuthController {
     public ResponseEntity<UserResponseRegistration> register(
             @Valid @RequestBody UserRequestRegistration userRequestRegistration
     ) {
-        return ResponseEntity.ok(
-                authService.registerUser(userRequestRegistration)
-        );
+        return ResponseEntity.ok(authService.registerUser(userRequestRegistration));
     }
 }

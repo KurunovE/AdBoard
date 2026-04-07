@@ -58,7 +58,7 @@ public class AuthService {
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("grant_type", "password");
         map.add("client_id", clientId);
-        map.add("username", loginRequest.username());
+        map.add("username", loginRequest.email());
         map.add("password", loginRequest.password());
         map.add("scope", "openid");
 

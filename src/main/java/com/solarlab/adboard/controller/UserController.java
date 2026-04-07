@@ -34,10 +34,11 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/delete/{id}")
-    public void deleteUser(
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<Void> deleteUser(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {
         userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

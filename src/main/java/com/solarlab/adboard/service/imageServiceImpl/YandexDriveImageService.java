@@ -1,5 +1,8 @@
 package com.solarlab.adboard.service.imageServiceImpl;
 
+import com.solarlab.adboard.dto.response.YandexPublicUrlResponse;
+import com.solarlab.adboard.dto.response.YandexUploadResponse;
+import com.solarlab.adboard.exception.YandexDiskException;
 import com.solarlab.adboard.model.Advertisement;
 import com.solarlab.adboard.model.Image;
 import com.solarlab.adboard.repository.AdvertisementRepository;
@@ -13,12 +16,14 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -32,9 +37,11 @@ public class YandexDriveImageService implements ImageService {
     @Value("${yandex.disk.api-url}")
     private String apiUrl;
 
-    public YandexDriveImageService(@Qualifier("yandexRestTemplate") RestTemplate yandexRestTemplate,
-                                   ImageRepository imageRepository,
-                                   AdvertisementRepository advertisementRepository) {
+    public YandexDriveImageService(
+            @Qualifier("yandexRestTemplate") RestTemplate yandexRestTemplate,
+            ImageRepository imageRepository,
+            AdvertisementRepository advertisementRepository
+    ) {
         this.yandexRestTemplate = yandexRestTemplate;
         this.imageRepository = imageRepository;
         this.advertisementRepository = advertisementRepository;
@@ -45,33 +52,60 @@ public class YandexDriveImageService implements ImageService {
     public Image uploadImage(MultipartFile file, Long advertisementId) {
         Advertisement advertisement = advertisementRepository.findById(advertisementId)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Advertisement not found"
+                        "Advertisement with id " + advertisementId + " not found"
                 ));
 
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        String path = "app:/images/" + fileName;
+        String directoryPath = "app:/images";
+        String filePath = directoryPath + "/" + fileName;
 
         try {
-            String uploadUrl = getUploadUrl(path);
+            ensureDirectoryExists(directoryPath);
+
+            String uploadUrl = getUploadUrl(filePath);
 
             uploadFileToYandex(uploadUrl, file.getBytes());
 
-            publishFile(path);
+            publishFile(filePath);
 
-            String publicUrl = getPublicUrl(path);
+            String publicUrl = getPublicUrl(filePath);
 
             Image image = Image.builder()
                     .advertisement(advertisement)
                     .url(publicUrl)
-                    .path(path)
+                    .path(filePath)
                     .sortOrder(advertisement.getImages().size())
                     .build();
 
             return imageRepository.save(image);
 
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new YandexDiskException(e.getMessage(), e.getStatusCode(), e.getResponseBodyAsString());
         } catch (IOException e) {
-            log.error("Failed to upload image", e);
-            throw new RuntimeException("Image upload failed", e);
+            log.error("File processing error during upload", e);
+            throw new RuntimeException("Failed to read image file", e);
+        }
+    }
+
+    private void ensureDirectoryExists(String path) {
+        String url = UriComponentsBuilder.fromUriString(apiUrl)
+                .queryParam("path", path)
+                .toUriString();
+        try {
+            yandexRestTemplate.getForEntity(url, Object.class);
+        } catch (HttpClientErrorException.NotFound e) {
+            log.info("Directory {} not found on Yandex Disk, creating it", path);
+            try {
+                yandexRestTemplate.put(url, null);
+            } catch (HttpClientErrorException.Conflict conflict) {
+                log.info("Directory {} already exists (concurrent creation)", path);
+            } catch (HttpClientErrorException | HttpServerErrorException e2) {
+                throw new YandexDiskException("Failed to create directory: " + e2.getMessage(),
+                        e2.getStatusCode(), e2.getResponseBodyAsString());
+            }
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new YandexDiskException("Failed to check directory: " + e.getMessage(),
+                    e.getStatusCode(), e.getResponseBodyAsString());
         }
     }
 
@@ -80,16 +114,14 @@ public class YandexDriveImageService implements ImageService {
     public void deleteImage(Long imageId) {
         Image image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Image not found"
+                        "Image with: " + imageId + " not found"
                 ));
 
         try {
             deleteFromYandex(image.getPath());
-
             imageRepository.delete(image);
-        } catch (Exception e) {
-            log.error("Failed to delete image from Yandex Disk", e);
-            throw new RuntimeException("Image deletion failed", e);
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new YandexDiskException(e.getMessage(), e.getStatusCode(), e.getResponseBodyAsString());
         }
     }
 
@@ -98,8 +130,10 @@ public class YandexDriveImageService implements ImageService {
                 .queryParam("path", path)
                 .toUriString();
 
-        ResponseEntity<Map> response = yandexRestTemplate.getForEntity(url, Map.class);
-        return (String) response.getBody().get("href");
+        ResponseEntity<YandexUploadResponse> response = yandexRestTemplate.getForEntity(url,
+                YandexUploadResponse.class);
+
+        return Objects.requireNonNull(response.getBody()).href();
     }
 
     private void uploadFileToYandex(String uploadUrl, byte[] fileData) {
@@ -120,8 +154,8 @@ public class YandexDriveImageService implements ImageService {
                 .queryParam("fields", "public_url")
                 .toUriString();
 
-        ResponseEntity<Map> response = yandexRestTemplate.getForEntity(url, Map.class);
-        return (String) response.getBody().get("public_url");
+        ResponseEntity<YandexPublicUrlResponse> response = yandexRestTemplate.getForEntity(url, YandexPublicUrlResponse.class);
+        return Objects.requireNonNull(response.getBody()).publicUrl();
     }
 
     private void deleteFromYandex(String path) {
