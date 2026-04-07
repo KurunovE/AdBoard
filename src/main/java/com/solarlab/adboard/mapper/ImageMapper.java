@@ -1,6 +1,6 @@
 package com.solarlab.adboard.mapper;
 
-import com.solarlab.adboard.dto.response.ImageResponse;
+import com.solarlab.adboard.dto.response.image.ImageResponse;
 import com.solarlab.adboard.model.Image;
 import org.mapstruct.Mapper;
 

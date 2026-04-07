@@ -1,4 +1,4 @@
-package com.solarlab.adboard.dto.response;
+package com.solarlab.adboard.dto.response.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

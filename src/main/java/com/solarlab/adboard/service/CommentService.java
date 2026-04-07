@@ -1,7 +1,7 @@
 package com.solarlab.adboard.service;
 
-import com.solarlab.adboard.dto.request.CommentRequest;
-import com.solarlab.adboard.dto.response.CommentResponse;
+import com.solarlab.adboard.dto.request.comment.CommentRequest;
+import com.solarlab.adboard.dto.response.comment.CommentResponse;
 import com.solarlab.adboard.mapper.CommentMapper;
 import com.solarlab.adboard.model.Advertisement;
 import com.solarlab.adboard.model.Comment;

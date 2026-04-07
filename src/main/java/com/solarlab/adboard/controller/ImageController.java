@@ -1,6 +1,6 @@
 package com.solarlab.adboard.controller;
 
-import com.solarlab.adboard.dto.response.ImageResponse;
+import com.solarlab.adboard.dto.response.image.ImageResponse;
 import com.solarlab.adboard.mapper.ImageMapper;
 import com.solarlab.adboard.model.Image;
 import com.solarlab.adboard.service.ImageService;

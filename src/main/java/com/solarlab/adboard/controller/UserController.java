@@ -1,7 +1,7 @@
 package com.solarlab.adboard.controller;
 
-import com.solarlab.adboard.dto.request.UpdateUserRequest;
-import com.solarlab.adboard.dto.response.UserResponse;
+import com.solarlab.adboard.dto.request.user.UpdateUserRequest;
+import com.solarlab.adboard.dto.response.user.UserResponse;
 import com.solarlab.adboard.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.PositiveOrZero;

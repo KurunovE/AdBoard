@@ -1,9 +1,9 @@
 package com.solarlab.adboard.controller;
 
-import com.solarlab.adboard.dto.request.LoginRequest;
-import com.solarlab.adboard.dto.request.UserRequestRegistration;
-import com.solarlab.adboard.dto.response.LoginResponse;
-import com.solarlab.adboard.dto.response.UserResponseRegistration;
+import com.solarlab.adboard.dto.request.auth.LoginRequest;
+import com.solarlab.adboard.dto.request.user.UserRequestRegistration;
+import com.solarlab.adboard.dto.response.auth.LoginResponse;
+import com.solarlab.adboard.dto.response.user.UserResponseRegistration;
 import com.solarlab.adboard.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,6 @@
-package com.solarlab.adboard.dto.response;
+package com.solarlab.adboard.dto.response.comment;
 
+import com.solarlab.adboard.dto.response.user.UserResponse;
 import lombok.Builder;
 import java.time.LocalDateTime;
 

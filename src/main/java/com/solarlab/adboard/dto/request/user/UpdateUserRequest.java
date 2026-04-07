@@ -1,4 +1,4 @@
-package com.solarlab.adboard.dto.request;
+package com.solarlab.adboard.dto.request.user;
 
 import jakarta.validation.constraints.NotBlank;
 

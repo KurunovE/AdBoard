@@ -1,4 +1,4 @@
-package com.solarlab.adboard.dto.response;
+package com.solarlab.adboard.dto.response.category;
 
 public record CategoryResponse(
         Long id,

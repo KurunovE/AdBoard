@@ -1,7 +1,7 @@
 package com.solarlab.adboard.service;
 
-import com.solarlab.adboard.dto.request.UpdateUserRequest;
-import com.solarlab.adboard.dto.response.UserResponse;
+import com.solarlab.adboard.dto.request.user.UpdateUserRequest;
+import com.solarlab.adboard.dto.response.user.UserResponse;
 import com.solarlab.adboard.mapper.UserMapper;
 import com.solarlab.adboard.model.User;
 import com.solarlab.adboard.repository.UserRepository;
@@ -16,6 +16,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final KeycloakAdminService keycloakAdminService;
 
     @Transactional(readOnly = true)
     public UserResponse findUserById(Long id) {
@@ -45,9 +46,12 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new EntityNotFoundException("User with id " + id + " not found");
-        }
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "User with id " + id + " not found"
+                ));
+
+        keycloakAdminService.deleteUserByEmail(user.getEmail());
+        userRepository.delete(user);
     }
 }

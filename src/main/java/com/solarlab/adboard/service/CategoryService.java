@@ -1,7 +1,7 @@
 package com.solarlab.adboard.service;
 
-import com.solarlab.adboard.dto.request.CategoryRequest;
-import com.solarlab.adboard.dto.response.CategoryResponse;
+import com.solarlab.adboard.dto.request.category.CategoryRequest;
+import com.solarlab.adboard.dto.response.category.CategoryResponse;
 import com.solarlab.adboard.mapper.CategoryMapper;
 import com.solarlab.adboard.model.Category;
 import com.solarlab.adboard.repository.CategoryRepository;

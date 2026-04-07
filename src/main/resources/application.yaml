@@ -26,8 +26,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:9090/realms/adboard
-          jwk-set-uri: http://localhost:9090/realms/adboard/protocol/openid-connect/certs
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9090/realms/adboard}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:9090/realms/adboard/protocol/openid-connect/certs}
 
 jwt:
   auth:
@@ -42,3 +42,12 @@ yandex:
   disk:
     token: ${YANDEX_DISK_TOKEN:y0__xD23eiqBRj8_T8gvIWy_xYwyvPU0AjaOcdQEeUNu-MXXpaSw0V2ZbuSHg}
     api-url: https://cloud-api.yandex.net/v1/disk/resources
+
+keycloak:
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:9090}
+  realm: ${KEYCLOAK_REALM:adboard}
+  client-id: ${KEYCLOAK_CLIENT_ID:adboard-client}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:ClmBanN83XyGx0EmyGVOcvsVWcx6Z49w}
+  admin-username: ${KEYCLOAK_ADMIN_USERNAME:admin}
+  admin-password: ${KEYCLOAK_ADMIN_PASSWORD:password}
+  admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}

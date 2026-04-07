@@ -1,7 +1,7 @@
 package com.solarlab.adboard.service.imageServiceImpl;
 
-import com.solarlab.adboard.dto.response.YandexPublicUrlResponse;
-import com.solarlab.adboard.dto.response.YandexUploadResponse;
+import com.solarlab.adboard.dto.response.yandex.YandexPublicUrlResponse;
+import com.solarlab.adboard.dto.response.yandex.YandexUploadResponse;
 import com.solarlab.adboard.exception.YandexDiskException;
 import com.solarlab.adboard.model.Advertisement;
 import com.solarlab.adboard.model.Image;

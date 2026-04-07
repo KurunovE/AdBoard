@@ -1,9 +1,9 @@
-package com.solarlab.adboard.dto.response;
+package com.solarlab.adboard.dto.response.user;
 
 import lombok.Builder;
 
 @Builder
-public record UserResponse(
+public record UserResponseRegistration(
         Long id,
         String name,
         String email,

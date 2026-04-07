@@ -1,4 +1,4 @@
-package com.solarlab.adboard.dto.request;
+package com.solarlab.adboard.dto.request.comment;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
