@@ -41,7 +41,6 @@ public class AuthService {
     private final KeycloakAdminService keycloakAdminService;
     private final ObjectMapper objectMapper;
 
-    private static final String KEYCLOAK_PASSWORD_PLACEHOLDER = "{keycloak}";
     private static final String KEYCLOAK_PHONE_PLACEHOLDER = null;
 
     @Transactional
@@ -100,7 +99,7 @@ public class AuthService {
                 throw new IllegalStateException("Keycloak returned an empty login response");
             }
 
-            synchronizeLocalUser(loginResponse.accessToken(), loginRequest.password());
+            synchronizeLocalUser(loginResponse.accessToken());
             return loginResponse;
         } catch (HttpClientErrorException ex) {
             if (ex.getStatusCode().value() == 400 || ex.getStatusCode().value() == 401) {
@@ -110,7 +109,7 @@ public class AuthService {
         }
     }
 
-    private void synchronizeLocalUser(String accessToken, String rawPassword) {
+    private void synchronizeLocalUser(String accessToken) {
         Map<String, Object> claims = extractClaims(accessToken);
 
         String email = getStringClaim(claims, "email");
@@ -132,9 +131,8 @@ public class AuthService {
         final String resolvedEmail = email;
         final String resolvedName = name;
         userRepository.findByEmail(resolvedEmail)
-                .map(existingUser -> updateExistingUser(
-                        existingUser, resolvedName, rawPassword))
-                .orElseGet(() -> createLocalUser(resolvedEmail, resolvedName, rawPassword));
+                .map(existingUser -> updateExistingUser(existingUser, resolvedName))
+                .orElseGet(() -> createLocalUser(resolvedEmail, resolvedName));
     }
 
     private KeycloakUserCreateRequest buildKeycloakUserCreateRequest(
@@ -159,31 +157,22 @@ public class AuthService {
                 .name(userRequestRegistration.name())
                 .email(userRequestRegistration.email())
                 .phone(userRequestRegistration.phone())
-                .password(userRequestRegistration.password())
                 .build();
     }
 
-    private User updateExistingUser(
-            User existingUser,
-            String name,
-            String rawPassword
-    ) {
+    private User updateExistingUser(User existingUser, String name) {
         existingUser.setName(name);
-        if (!hasText(existingUser.getPassword())) {
-            existingUser.setPassword(fallbackPassword(rawPassword));
-        }
         if (!hasText(existingUser.getPhone())) {
             existingUser.setPhone(KEYCLOAK_PHONE_PLACEHOLDER);
         }
         return userRepository.save(existingUser);
     }
 
-    private User createLocalUser(String email, String name, String rawPassword) {
+    private User createLocalUser(String email, String name) {
         User user = User.builder()
                 .name(name)
                 .email(email)
                 .phone(KEYCLOAK_PHONE_PLACEHOLDER)
-                .password(fallbackPassword(rawPassword))
                 .build();
         return userRepository.save(user);
     }
@@ -209,10 +198,6 @@ public class AuthService {
     private String getStringClaim(Map<String, Object> claims, String name) {
         Object value = claims.get(name);
         return value instanceof String stringValue ? stringValue : null;
-    }
-
-    private String fallbackPassword(String rawPassword) {
-        return hasText(rawPassword) ? rawPassword : KEYCLOAK_PASSWORD_PLACEHOLDER;
     }
 
     private boolean hasText(String value) {

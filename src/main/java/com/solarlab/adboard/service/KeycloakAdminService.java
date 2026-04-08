@@ -3,6 +3,7 @@ package com.solarlab.adboard.service;
 import com.solarlab.adboard.config.KeycloakProperties;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakRoleMappingRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakUserCreateRequest;
+import com.solarlab.adboard.dto.request.keycloak.KeycloakUserUpdateRequest;
 import com.solarlab.adboard.dto.response.keycloak.KeycloakAccessTokenResponse;
 import com.solarlab.adboard.dto.response.keycloak.KeycloakClientResponse;
 import com.solarlab.adboard.dto.response.keycloak.KeycloakRoleResponse;
@@ -120,6 +121,41 @@ public class KeycloakAdminService {
         }
 
         deleteUserById(keycloakUserId);
+    }
+
+    public void updateUserEmail(String currentEmail, String newEmail) {
+        String keycloakUserId = findUserIdByEmail(currentEmail);
+
+        if (keycloakUserId == null) {
+            throw new IllegalStateException("User with email " + currentEmail + " not found in Keycloak");
+        }
+
+        String adminAccessToken = getAdminAccessToken();
+
+        try {
+            restTemplate.exchange(
+                    keycloakProperties.usersUrl() + "/" + keycloakUserId,
+                    HttpMethod.PUT,
+                    new HttpEntity<>(
+                            new KeycloakUserUpdateRequest(
+                                    newEmail,
+                                    newEmail,
+                                    true,
+                                    true,
+                                    List.of()
+                            ),
+                            authorizedJsonHeaders(adminAccessToken)
+                    ),
+                    Void.class
+            );
+        } catch (HttpStatusCodeException ex) {
+            if (ex.getStatusCode() == HttpStatus.CONFLICT) {
+                throw new IllegalArgumentException("User already exists in Keycloak");
+            }
+            throw new IllegalStateException(
+                    "Failed to update user in Keycloak: " + ex.getResponseBodyAsString(), ex
+            );
+        }
     }
 
     public String findUserIdByEmail(String email) {

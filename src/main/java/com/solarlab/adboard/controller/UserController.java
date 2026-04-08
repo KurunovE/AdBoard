@@ -25,10 +25,10 @@ public class UserController {
     }
 
     @PreAuthorize("@securityUtils.isOwner(#id)")
-    @PostMapping("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(
             @PositiveOrZero @PathVariable(name = "id") Long id,
-            @Valid @RequestBody UpdateUserRequest updateUserRequest
+            @RequestBody UpdateUserRequest updateUserRequest
     ) {
         return ResponseEntity.ok(userService.updateUser(id, updateUserRequest));
     }

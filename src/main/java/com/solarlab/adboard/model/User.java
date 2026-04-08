@@ -28,9 +28,6 @@ public class User {
     @Column(name = "phone", nullable = false)
     private String phone;
 
-    @Column(name = "password", nullable = false)
-    private String password;
-
     @OneToMany(
             mappedBy = "author",
             cascade = CascadeType.ALL,

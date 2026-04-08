@@ -29,18 +29,30 @@ public class UserService {
 
     @Transactional
     public UserResponse updateUser(Long id, UpdateUserRequest updateUserRequest) {
-
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "User with id " + id + " not found"
                 ));
 
-        user.setName(updateUserRequest.name());
-        user.setEmail(updateUserRequest.email());
-        user.setPhone(updateUserRequest.phone());
+        boolean changed = false;
+
+        if (hasText(updateUserRequest.name())
+                && !user.getName().equals(updateUserRequest.name())) {
+            user.setName(updateUserRequest.name());
+            changed = true;
+        }
+
+        if (hasText(updateUserRequest.phone())
+                && !user.getPhone().equals(updateUserRequest.phone())) {
+            user.setPhone(updateUserRequest.phone());
+            changed = true;
+        }
+
+        if (!changed) {
+            return userMapper.toUserResponse(user);
+        }
 
         User updatedUser = userRepository.save(user);
-
         return userMapper.toUserResponse(updatedUser);
     }
 
@@ -53,5 +65,9 @@ public class UserService {
 
         keycloakAdminService.deleteUserByEmail(user.getEmail());
         userRepository.delete(user);
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }
