@@ -31,7 +31,7 @@ public class Advertisement {
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "advertisement_status", nullable = false)
+    @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private AdvertisementStatus status;
 

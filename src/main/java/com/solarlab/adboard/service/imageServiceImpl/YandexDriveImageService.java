@@ -80,7 +80,11 @@ public class YandexDriveImageService implements ImageService {
             return imageRepository.save(image);
 
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            throw new YandexDiskException(e.getMessage(), e.getStatusCode(), e.getResponseBodyAsString());
+            throw new YandexDiskException(
+                    e.getMessage(),
+                    e.getStatusCode(),
+                    e.getResponseBodyAsString()
+            );
         } catch (IOException e) {
             log.error("File processing error during upload", e);
             throw new RuntimeException("Failed to read image file", e);
@@ -121,7 +125,11 @@ public class YandexDriveImageService implements ImageService {
             deleteFromYandex(image.getPath());
             imageRepository.delete(image);
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            throw new YandexDiskException(e.getMessage(), e.getStatusCode(), e.getResponseBodyAsString());
+            throw new YandexDiskException(
+                    e.getMessage(),
+                    e.getStatusCode(),
+                    e.getResponseBodyAsString()
+            );
         }
     }
 
@@ -154,7 +162,8 @@ public class YandexDriveImageService implements ImageService {
                 .queryParam("fields", "public_url")
                 .toUriString();
 
-        ResponseEntity<YandexPublicUrlResponse> response = yandexRestTemplate.getForEntity(url, YandexPublicUrlResponse.class);
+        ResponseEntity<YandexPublicUrlResponse> response =
+                yandexRestTemplate.getForEntity(url, YandexPublicUrlResponse.class);
         return Objects.requireNonNull(response.getBody()).publicUrl();
     }
 
