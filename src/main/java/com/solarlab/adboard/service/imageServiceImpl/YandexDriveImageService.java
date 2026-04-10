@@ -10,6 +10,7 @@ import com.solarlab.adboard.repository.ImageRepository;
 import com.solarlab.adboard.service.ImageService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
@@ -33,18 +34,19 @@ public class YandexDriveImageService implements ImageService {
     private final RestTemplate yandexRestTemplate;
     private final ImageRepository imageRepository;
     private final AdvertisementRepository advertisementRepository;
+    private final String apiUrl;
 
-    @Value("${yandex.disk.api-url}")
-    private String apiUrl;
-
+    @Autowired
     public YandexDriveImageService(
             @Qualifier("yandexRestTemplate") RestTemplate yandexRestTemplate,
             ImageRepository imageRepository,
-            AdvertisementRepository advertisementRepository
+            AdvertisementRepository advertisementRepository,
+            @Value("${yandex.disk.api-url}") String apiUrl
     ) {
         this.yandexRestTemplate = yandexRestTemplate;
         this.imageRepository = imageRepository;
         this.advertisementRepository = advertisementRepository;
+        this.apiUrl = apiUrl;
     }
 
     @Override

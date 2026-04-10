@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +34,12 @@ public class AdvertisementService {
     public List<AdvertisementResponse> findAll(AdvertisementFilter filter) {
         validateFilter(filter);
 
-        return advertisementRepository.findAll().stream()
-                .filter(advertisement -> matchesFilter(advertisement, filter))
+        return advertisementRepository.findAllWithFilters(
+                filter.categoryId(),
+                filter.authorId(),
+                filter.minPrice(),
+                filter.maxPrice()
+        ).stream()
                 .map(advertisementMapper::toAdvertisementResponse)
                 .toList();
     }
@@ -128,19 +131,6 @@ public class AdvertisementService {
                 && filter.minPrice().compareTo(filter.maxPrice()) > 0) {
             throw new IllegalArgumentException("minPrice cannot be greater than maxPrice");
         }
-    }
-
-    private boolean matchesFilter(Advertisement advertisement, AdvertisementFilter filter) {
-        boolean matchesCategory = filter.categoryId() == null
-                || Objects.equals(advertisement.getCategory().getId(), filter.categoryId());
-        boolean matchesAuthor = filter.authorId() == null
-                || Objects.equals(advertisement.getAuthor().getId(), filter.authorId());
-        boolean matchesMinPrice = filter.minPrice() == null
-                || advertisement.getPrice().compareTo(filter.minPrice()) >= 0;
-        boolean matchesMaxPrice = filter.maxPrice() == null
-                || advertisement.getPrice().compareTo(filter.maxPrice()) <= 0;
-
-        return matchesCategory && matchesAuthor && matchesMinPrice && matchesMaxPrice;
     }
 
     private boolean hasText(String value) {

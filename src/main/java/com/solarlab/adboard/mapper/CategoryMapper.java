@@ -10,6 +10,7 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
     @Mapping(target = "parentId", source = "parent.id")
+    @Mapping(target = "parentName", source = "parent.name")
     CategoryResponse toCategoryResponse(Category category);
 
     @Mapping(target = "id", ignore = true)

@@ -7,13 +7,15 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
-@RequestMapping("v1/advertisements/{advertisementId}/comments")
 @RequiredArgsConstructor
+@RequestMapping("v1/advertisements/{advertisementId}/comments")
 public class CommentController {
 
     private final CommentService commentService;
