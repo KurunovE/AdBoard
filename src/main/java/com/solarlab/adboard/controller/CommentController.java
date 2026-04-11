@@ -7,15 +7,16 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Validated
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("v1/advertisements/{advertisementId}/comments")
+@RequiredArgsConstructor
+@Validated
 public class CommentController {
 
     private final CommentService commentService;
@@ -28,6 +29,7 @@ public class CommentController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CommentResponse> createComment(
             @PositiveOrZero @PathVariable(name = "advertisementId") Long advertisementId,
             @Valid @RequestBody CommentRequest commentRequest
@@ -36,6 +38,7 @@ public class CommentController {
     }
 
     @DeleteMapping("/{id}/delete")
+    @PreAuthorize("@securityUtils.isCommentOwner(#id)")
     public void deleteComment(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {

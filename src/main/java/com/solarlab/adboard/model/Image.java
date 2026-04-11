@@ -42,7 +42,7 @@ public class Image {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof User)) return false;
+        if (!(o instanceof Image)) return false;
         Image image = (Image) o;
         return id != null && id.equals(image.id);
     }
@@ -56,7 +56,6 @@ public class Image {
     public String toString() {
         return "Image{"
                 + "id=" + id
-                + ", advertisement_id=" + advertisement.getId()
                 + ", path='" + path + '\''
                 + ", url='" + url + '\''
                 + ", sort_order=" + sortOrder

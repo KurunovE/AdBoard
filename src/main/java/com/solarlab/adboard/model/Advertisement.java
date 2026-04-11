@@ -95,8 +95,6 @@ public class Advertisement {
                 + ", description='" + description + '\''
                 + ", price=" + price
                 + ", status=" + status
-                + ", author_id=" + author.getId()
-                + ", category_id=" + category.getId()
                 + ", createdAt=" + createdAt
                 + ", updatedAt=" + updatedAt
                 + '}';

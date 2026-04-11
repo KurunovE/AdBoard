@@ -97,11 +97,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionResponse> handleAll(Exception ex) {
-        log.error("Unexpected error", ex);
+        log.error("Unexpected error occurred: ", ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ExceptionResponse.builder()
-                        .message("An unexpected error occurred: " + ex.getMessage())
+                        .message("An unexpected error occurred. Please contact support.")
                         .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                         .timestamp(LocalDateTime.now())
                         .build());

@@ -55,8 +55,6 @@ public class Comment {
     public String toString() {
         return "Comment{"
                 + "id=" + id
-                + ", advertisement_id=" + advertisement.getId()
-                + ", author_id=" + author.getId()
                 + ", text='" + text + '\''
                 + ", created_at=" + createdAt
                 + '}';
