@@ -1,10 +1,10 @@
 -- Пользователи
 CREATE TABLE users
 (
-    id            BIGSERIAL PRIMARY KEY,
-    name          VARCHAR(100) NOT NULL,
-    email         VARCHAR(255) NOT NULL,
-    phone         VARCHAR(20),
+    id    BIGSERIAL PRIMARY KEY,
+    name  VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20)  NOT NULL,
 
     CONSTRAINT ak_users_email
         UNIQUE (email),
@@ -40,14 +40,14 @@ CREATE TABLE categories
 CREATE TABLE advertisements
 (
     id          BIGSERIAL PRIMARY KEY,
-    title       VARCHAR(200) NOT NULL,
+    title       VARCHAR(200)         NOT NULL,
     description TEXT,
-    price       NUMERIC(15, 2),
-    status      advertisement_status    NOT NULL DEFAULT 'ACTIVE',
-    author_id   BIGINT       NOT NULL,
-    category_id BIGINT,
-    created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
+    price       NUMERIC(15, 2)       NOT NULL,
+    status      advertisement_status NOT NULL DEFAULT 'ACTIVE',
+    author_id   BIGINT               NOT NULL,
+    category_id BIGINT               NOT NULL,
+    created_at  TIMESTAMP            NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMP            DEFAULT NOW(),
 
     CONSTRAINT fk_advertisements_author_id
         FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE,
@@ -65,12 +65,12 @@ CREATE TABLE advertisements
 -- Фотографии объявлений
 CREATE TABLE images
 (
-    id          BIGSERIAL PRIMARY KEY,
-    advertisement_id       BIGINT       NOT NULL,
-    url         VARCHAR(500) NOT NULL,
-    path        VARCHAR(500) NOT NULL,
-    sort_order  INTEGER      NOT NULL DEFAULT 0,
-    uploaded_at TIMESTAMP    NOT NULL DEFAULT NOW(),
+    id               BIGSERIAL PRIMARY KEY,
+    advertisement_id BIGINT       NOT NULL,
+    url              VARCHAR(500) NOT NULL,
+    path             VARCHAR(500) NOT NULL,
+    sort_order       INTEGER      NOT NULL DEFAULT 0,
+    uploaded_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_images_advertisement_id
         FOREIGN KEY (advertisement_id) REFERENCES advertisements (id) ON DELETE CASCADE,
@@ -89,11 +89,11 @@ CREATE TABLE images
 -- Комментарии
 CREATE TABLE comments
 (
-    id         BIGSERIAL PRIMARY KEY,
-    advertisement_id      BIGINT    NOT NULL,
-    author_id  BIGINT    NOT NULL,
-    text       TEXT      NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    id               BIGSERIAL PRIMARY KEY,
+    advertisement_id BIGINT    NOT NULL,
+    author_id        BIGINT    NOT NULL,
+    text             TEXT      NOT NULL,
+    created_at       TIMESTAMP NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_comments_ad_id
         FOREIGN KEY (advertisement_id) REFERENCES advertisements (id) ON DELETE CASCADE,

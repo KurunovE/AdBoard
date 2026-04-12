@@ -28,7 +28,7 @@ public class Advertisement {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "price", nullable = false, precision = 10, scale = 2)
+    @Column(name = "price", nullable = false, precision = 15, scale = 2)
     private BigDecimal price;
 
     @Column(name = "status", nullable = false)
@@ -43,6 +43,12 @@ public class Advertisement {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @OneToMany(
             mappedBy = "advertisement",
             cascade = CascadeType.ALL,
@@ -56,12 +62,6 @@ public class Advertisement {
             orphanRemoval = true
     )
     private List<Image> images = new ArrayList<>();
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
