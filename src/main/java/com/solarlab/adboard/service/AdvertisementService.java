@@ -2,6 +2,7 @@ package com.solarlab.adboard.service;
 
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementCreateRequest;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementFilter;
+import com.solarlab.adboard.dto.request.advertisement.AdvertisementStatusUpdateRequest;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementUpdateRequest;
 import com.solarlab.adboard.dto.response.advertisement.AdvertisementResponse;
 import com.solarlab.adboard.enums.AdvertisementStatus;
@@ -98,6 +99,23 @@ public class AdvertisementService {
                     ));
             advertisement.setCategory(category);
         }
+
+        Advertisement updatedAdvertisement = advertisementRepository.save(advertisement);
+        return advertisementMapper.toAdvertisementResponse(updatedAdvertisement);
+    }
+
+    @Transactional
+    public AdvertisementResponse changeStatus(Long id, AdvertisementStatusUpdateRequest request) {
+        Advertisement advertisement = advertisementRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Advertisement with id " + id + " not found"
+                ));
+
+        if (advertisement.getStatus() == request.status()) {
+            return advertisementMapper.toAdvertisementResponse(advertisement);
+        }
+
+        advertisement.setStatus(request.status());
 
         Advertisement updatedAdvertisement = advertisementRepository.save(advertisement);
         return advertisementMapper.toAdvertisementResponse(updatedAdvertisement);

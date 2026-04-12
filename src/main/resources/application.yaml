@@ -1,14 +1,17 @@
 server:
-  port: 8081
+  port: ${SERVER_PORT:8081}
 
 spring:
   application:
     name: AdBoard
 
+  profiles:
+    active: local
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/adboard_db
-    username: postgres
-    password: admin123
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -26,8 +29,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9090/realms/adboard}
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:9090/realms/adboard/protocol/openid-connect/certs}
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
 
 jwt:
   auth:
@@ -40,14 +43,14 @@ logging:
 
 yandex:
   disk:
-    token: ${YANDEX_DISK_TOKEN:y0__xD23eiqBRj8_T8gvIWy_xYwyvPU0AjaOcdQEeUNu-MXXpaSw0V2ZbuSHg}
+    token: ${YANDEX_DISK_TOKEN}
     api-url: https://cloud-api.yandex.net/v1/disk/resources
 
 keycloak:
   auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:9090}
-  realm: ${KEYCLOAK_REALM:adboard}
-  client-id: ${KEYCLOAK_CLIENT_ID:adboard-client}
-  client-secret: ${KEYCLOAK_CLIENT_SECRET:ClmBanN83XyGx0EmyGVOcvsVWcx6Z49w}
-  admin-username: ${KEYCLOAK_ADMIN_USERNAME:admin}
-  admin-password: ${KEYCLOAK_ADMIN_PASSWORD:password}
-  admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
+  realm: ${KEYCLOAK_REALM}
+  client-id: ${KEYCLOAK_CLIENT_ID}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET}
+  admin-username: ${KEYCLOAK_ADMIN_USERNAME}
+  admin-password: ${KEYCLOAK_ADMIN_PASSWORD}
+  admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID}

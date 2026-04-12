@@ -2,6 +2,7 @@ package com.solarlab.adboard.controller;
 
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementCreateRequest;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementFilter;
+import com.solarlab.adboard.dto.request.advertisement.AdvertisementStatusUpdateRequest;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementUpdateRequest;
 import com.solarlab.adboard.dto.response.advertisement.AdvertisementResponse;
 import com.solarlab.adboard.service.AdvertisementService;
@@ -57,6 +58,15 @@ public class AdvertisementController {
             @Valid @RequestBody AdvertisementUpdateRequest request
     ) {
         return ResponseEntity.ok(advertisementService.update(id, request));
+    }
+
+    @PreAuthorize("@securityUtils.isAdvertisementOwner(#id)")
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<AdvertisementResponse> changeAdvertisementStatus(
+            @PositiveOrZero @PathVariable(name = "id") Long id,
+            @Valid @RequestBody AdvertisementStatusUpdateRequest request
+    ) {
+        return ResponseEntity.ok(advertisementService.changeStatus(id, request));
     }
 
     @PreAuthorize("@securityUtils.isAdvertisementOwner(#id)")
