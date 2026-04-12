@@ -22,7 +22,7 @@ public class ImageController {
     private final ImageMapper imageMapper;
 
     @PostMapping("/advertisements/{advertisementId}/upload")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("@securityUtils.isAdvertisementOwner(#advertisementId)")
     public ResponseEntity<ImageResponse> uploadImage(
             @PositiveOrZero @PathVariable(name = "advertisementId") Long advertisementId,
             @RequestParam("file") MultipartFile file
@@ -32,7 +32,7 @@ public class ImageController {
     }
 
     @DeleteMapping("/{id}/delete")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("@securityUtils.isImageOwner(#id)")
     public ResponseEntity<Void> deleteImage(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {

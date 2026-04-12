@@ -3,6 +3,7 @@ package com.solarlab.adboard.config;
 import com.solarlab.adboard.model.User;
 import com.solarlab.adboard.repository.AdvertisementRepository;
 import com.solarlab.adboard.repository.CommentRepository;
+import com.solarlab.adboard.repository.ImageRepository;
 import com.solarlab.adboard.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,7 @@ public class SecurityUtils {
     private final UserRepository userRepository;
     private final AdvertisementRepository advertisementRepository;
     private final CommentRepository commentRepository;
+    private final ImageRepository imageRepository;
 
     public boolean isOwner(Long userId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -91,6 +93,32 @@ public class SecurityUtils {
         return commentRepository.findById(commentId)
                 .map(comment -> Objects.equals(
                         comment.getAuthor().getEmail(),
+                        finalCurrentEmail
+                ))
+                .orElse(false);
+    }
+
+    public boolean isImageOwner(Long imageId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
+            return false;
+        }
+
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String currentEmail = jwt.getClaimAsString("email");
+        if (currentEmail == null) {
+            currentEmail = jwt.getClaimAsString("preferred_username");
+        }
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
+
+        if (isAdmin) return true;
+
+        final String finalCurrentEmail = currentEmail;
+        return imageRepository.findById(imageId)
+                .map(image -> Objects.equals(
+                        image.getAdvertisement().getAuthor().getEmail(),
                         finalCurrentEmail
                 ))
                 .orElse(false);

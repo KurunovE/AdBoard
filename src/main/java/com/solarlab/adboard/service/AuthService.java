@@ -1,12 +1,10 @@
 package com.solarlab.adboard.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solarlab.adboard.config.KeycloakProperties;
 import com.solarlab.adboard.dto.request.auth.LoginRequest;
-import com.solarlab.adboard.dto.request.user.UserRequestRegistration;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakCredentialRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakUserCreateRequest;
+import com.solarlab.adboard.dto.request.user.UserRequestRegistration;
 import com.solarlab.adboard.dto.response.auth.LoginResponse;
 import com.solarlab.adboard.dto.response.user.UserResponseRegistration;
 import com.solarlab.adboard.mapper.UserMapper;
@@ -25,10 +23,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -39,9 +34,6 @@ public class AuthService {
     private final UserMapper userMapper;
     private final KeycloakProperties keycloakProperties;
     private final KeycloakAdminService keycloakAdminService;
-    private final ObjectMapper objectMapper;
-
-    private static final String KEYCLOAK_PHONE_PLACEHOLDER = null;
 
     @Transactional
     public UserResponseRegistration registerUser(UserRequestRegistration userRequestRegistration) {
@@ -99,7 +91,6 @@ public class AuthService {
                 throw new IllegalStateException("Keycloak returned an empty login response");
             }
 
-            synchronizeLocalUser(loginResponse.accessToken());
             return loginResponse;
         } catch (HttpClientErrorException ex) {
             if (ex.getStatusCode().value() == 400 || ex.getStatusCode().value() == 401) {
@@ -107,32 +98,6 @@ public class AuthService {
             }
             throw ex;
         }
-    }
-
-    private void synchronizeLocalUser(String accessToken) {
-        Map<String, Object> claims = extractClaims(accessToken);
-
-        String email = getStringClaim(claims, "email");
-        if (!hasText(email)) {
-            email = getStringClaim(claims, "preferred_username");
-        }
-        if (!hasText(email)) {
-            throw new IllegalStateException("Email claim is missing in access token");
-        }
-
-        String name = getStringClaim(claims, "name");
-        if (!hasText(name)) {
-            name = getStringClaim(claims, "given_name");
-        }
-        if (!hasText(name)) {
-            name = email;
-        }
-
-        final String resolvedEmail = email;
-        final String resolvedName = name;
-        userRepository.findByEmail(resolvedEmail)
-                .map(existingUser -> updateExistingUser(existingUser, resolvedName))
-                .orElseGet(() -> createLocalUser(resolvedEmail, resolvedName));
     }
 
     private KeycloakUserCreateRequest buildKeycloakUserCreateRequest(
@@ -158,46 +123,6 @@ public class AuthService {
                 .email(userRequestRegistration.email())
                 .phone(userRequestRegistration.phone())
                 .build();
-    }
-
-    private User updateExistingUser(User existingUser, String name) {
-        existingUser.setName(name);
-        if (!hasText(existingUser.getPhone())) {
-            existingUser.setPhone(KEYCLOAK_PHONE_PLACEHOLDER);
-        }
-        return userRepository.save(existingUser);
-    }
-
-    private User createLocalUser(String email, String name) {
-        User user = User.builder()
-                .name(name)
-                .email(email)
-                .phone(KEYCLOAK_PHONE_PLACEHOLDER)
-                .build();
-        return userRepository.save(user);
-    }
-
-    private Map<String, Object> extractClaims(String accessToken) {
-        try {
-            String[] tokenParts = accessToken.split("\\.");
-            if (tokenParts.length < 2) {
-                throw new IllegalArgumentException("Access token has invalid format");
-            }
-
-            byte[] decodedPayload = Base64.getUrlDecoder().decode(tokenParts[1]);
-            return objectMapper.readValue(
-                    new String(decodedPayload, StandardCharsets.UTF_8),
-                    new TypeReference<>() {
-                    }
-            );
-        } catch (Exception ex) {
-            throw new IllegalStateException("Failed to read access token claims", ex);
-        }
-    }
-
-    private String getStringClaim(Map<String, Object> claims, String name) {
-        Object value = claims.get(name);
-        return value instanceof String stringValue ? stringValue : null;
     }
 
     private boolean hasText(String value) {

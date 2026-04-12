@@ -1,7 +1,7 @@
 package com.solarlab.adboard.dto.response.advertisement;
 
 import com.solarlab.adboard.dto.response.image.ImageResponse;
-import com.solarlab.adboard.dto.response.user.UserResponse;
+import com.solarlab.adboard.dto.response.user.UserAdvertisementResponse;
 import com.solarlab.adboard.enums.AdvertisementStatus;
 import lombok.Builder;
 
@@ -18,7 +18,7 @@ public record AdvertisementResponse(
         AdvertisementStatus status,
         Long categoryId,
         String categoryName,
-        UserResponse author,
+        UserAdvertisementResponse author,
         List<ImageResponse> images,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

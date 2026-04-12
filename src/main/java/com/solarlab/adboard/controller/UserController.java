@@ -19,6 +19,7 @@ public class UserController {
 
     private final UserService userService;
 
+    @PreAuthorize("@securityUtils.isOwner(#id)")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUser(
             @PositiveOrZero @PathVariable(name = "id") Long id
@@ -30,7 +31,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(
             @PositiveOrZero @PathVariable(name = "id") Long id,
-            @RequestBody UpdateUserRequest updateUserRequest
+            @Valid @RequestBody UpdateUserRequest updateUserRequest
     ) {
         return ResponseEntity.ok(userService.updateUser(id, updateUserRequest));
     }

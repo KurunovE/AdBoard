@@ -1,5 +1,6 @@
 package com.solarlab.adboard.dto.request.user;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record UserRequestRegistration(
@@ -7,6 +8,7 @@ public record UserRequestRegistration(
         String name,
 
         @NotBlank(message = "Email cannot be null")
+        @Email(message = "Email must be valid")
         String email,
 
         @NotBlank(message = "Phone cannot be null")
