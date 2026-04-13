@@ -9,6 +9,7 @@ import com.solarlab.adboard.dto.response.keycloak.KeycloakClientResponse;
 import com.solarlab.adboard.dto.response.keycloak.KeycloakRoleResponse;
 import com.solarlab.adboard.dto.response.keycloak.KeycloakUserSummaryResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class KeycloakAdminService {
 
@@ -57,9 +59,12 @@ public class KeycloakAdminService {
             }
 
             String path = location.getPath();
-            return path.substring(path.lastIndexOf('/') + 1);
+            String userId = path.substring(path.lastIndexOf('/') + 1);
+            log.info("Created Keycloak user id={}", userId);
+            return userId;
         } catch (HttpStatusCodeException ex) {
             if (ex.getStatusCode() == HttpStatus.CONFLICT) {
+                log.warn("Keycloak user creation conflict for username={}", request.username());
                 throw new IllegalArgumentException("User already exists in Keycloak");
             }
             throw new IllegalStateException(
@@ -88,6 +93,7 @@ public class KeycloakAdminService {
                     )), authorizedJsonHeaders(adminAccessToken)),
                     Void.class
             );
+            log.info("Assigned Keycloak role={} to userId={}", roleName, keycloakUserId);
         } catch (HttpStatusCodeException ex) {
             throw new IllegalStateException(
                     "Failed to assign Keycloak role "
@@ -107,6 +113,7 @@ public class KeycloakAdminService {
                     new HttpEntity<>(authorizedHeaders(adminAccessToken)),
                     Void.class
             );
+            log.info("Deleted Keycloak user id={}", keycloakUserId);
         } catch (HttpStatusCodeException ex) {
             throw new IllegalStateException(
                     "Failed to delete user from Keycloak: " + ex.getResponseBodyAsString(), ex
@@ -118,6 +125,7 @@ public class KeycloakAdminService {
         String keycloakUserId = findUserIdByEmail(email);
 
         if (keycloakUserId == null) {
+            log.warn("Skipped Keycloak user deletion because email={} was not found", email);
             return;
         }
 
@@ -149,8 +157,10 @@ public class KeycloakAdminService {
                     ),
                     Void.class
             );
+            log.info("Updated Keycloak user email {} -> {}", currentEmail, newEmail);
         } catch (HttpStatusCodeException ex) {
             if (ex.getStatusCode() == HttpStatus.CONFLICT) {
+                log.warn("Keycloak email update conflict for newEmail={}", newEmail);
                 throw new IllegalArgumentException("User already exists in Keycloak");
             }
             throw new IllegalStateException(

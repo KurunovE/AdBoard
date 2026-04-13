@@ -3,6 +3,7 @@ package com.solarlab.adboard.service;
 import com.solarlab.adboard.config.KeycloakProperties;
 import com.solarlab.adboard.dto.request.auth.LoginRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakCredentialRequest;
+import com.solarlab.adboard.dto.request.keycloak.KeycloakLoginRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakUserCreateRequest;
 import com.solarlab.adboard.dto.request.user.UserRequestRegistration;
 import com.solarlab.adboard.dto.response.auth.LoginResponse;
@@ -11,6 +12,7 @@ import com.solarlab.adboard.mapper.UserMapper;
 import com.solarlab.adboard.model.User;
 import com.solarlab.adboard.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,14 +20,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AuthService {
 
@@ -38,6 +39,7 @@ public class AuthService {
     @Transactional
     public UserResponseRegistration registerUser(UserRequestRegistration userRequestRegistration) {
         if (userRepository.findByEmail(userRequestRegistration.email()).isPresent()) {
+            log.warn("Registration rejected for existing email={}", userRequestRegistration.email());
             throw new IllegalArgumentException(
                     "User with email " + userRequestRegistration.email() + " already exists"
             );
@@ -49,8 +51,11 @@ public class AuthService {
         try {
             keycloakAdminService.assignClientRoleToUser(keycloakUserId, "USER");
             User savedUser = userRepository.save(buildLocalUser(userRequestRegistration));
+            log.info("Registered user email={} localId={}", savedUser.getEmail(), savedUser.getId());
             return userMapper.toUserResponseRegistration(savedUser);
         } catch (RuntimeException ex) {
+            log.warn("Registration failed after Keycloak user creation for email={}, rolling back Keycloak userId={}",
+                    userRequestRegistration.email(), keycloakUserId);
             keycloakAdminService.deleteUserById(keycloakUserId);
             if (ex instanceof DataIntegrityViolationException dataIntegrityViolationException) {
                 throw new IllegalArgumentException(
@@ -67,17 +72,16 @@ public class AuthService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("grant_type", "password");
-        map.add("client_id", keycloakProperties.clientId());
-        map.add("username", loginRequest.email());
-        map.add("password", loginRequest.password());
-        map.add("scope", "openid");
-        if (hasText(keycloakProperties.clientSecret())) {
-            map.add("client_secret", keycloakProperties.clientSecret());
-        }
+        KeycloakLoginRequest keycloakLoginRequest = KeycloakLoginRequest.builder()
+                .grantType("password")
+                .clientId(keycloakProperties.clientId())
+                .username(loginRequest.email())
+                .password(loginRequest.password())
+                .scope("openid")
+                .clientSecret(keycloakProperties.clientSecret())
+                .build();
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+        HttpEntity<?> request = new HttpEntity<>(keycloakLoginRequest.toFormData(), headers);
 
         try {
             ResponseEntity<LoginResponse> response = restTemplate.postForEntity(
@@ -91,9 +95,11 @@ public class AuthService {
                 throw new IllegalStateException("Keycloak returned an empty login response");
             }
 
+            log.info("Successful login for email={}", loginRequest.email());
             return loginResponse;
         } catch (HttpClientErrorException ex) {
             if (ex.getStatusCode().value() == 400 || ex.getStatusCode().value() == 401) {
+                log.warn("Login rejected for email={}", loginRequest.email());
                 throw new IllegalArgumentException("Invalid email or password");
             }
             throw ex;

@@ -1,4 +1,4 @@
-package com.solarlab.adboard.service.imageServiceImpl;
+package com.solarlab.adboard.service.impl;
 
 import com.solarlab.adboard.dto.response.yandex.YandexPublicUrlResponse;
 import com.solarlab.adboard.dto.response.yandex.YandexUploadResponse;
@@ -60,6 +60,7 @@ public class YandexDriveImageService implements ImageService {
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
         String directoryPath = "app:/images";
         String filePath = directoryPath + "/" + fileName;
+        boolean uploadedToYandex = false;
 
         try {
             ensureDirectoryExists(directoryPath);
@@ -67,6 +68,7 @@ public class YandexDriveImageService implements ImageService {
             String uploadUrl = getUploadUrl(filePath);
 
             uploadFileToYandex(uploadUrl, file.getBytes());
+            uploadedToYandex = true;
 
             publishFile(filePath);
 
@@ -82,14 +84,19 @@ public class YandexDriveImageService implements ImageService {
             return imageRepository.save(image);
 
         } catch (HttpClientErrorException | HttpServerErrorException e) {
+            cleanupUploadedFile(filePath, uploadedToYandex);
             throw new YandexDiskException(
                     e.getMessage(),
                     e.getStatusCode(),
                     e.getResponseBodyAsString()
             );
         } catch (IOException e) {
+            cleanupUploadedFile(filePath, uploadedToYandex);
             log.error("File processing error during upload", e);
             throw new RuntimeException("Failed to read image file", e);
+        } catch (RuntimeException e) {
+            cleanupUploadedFile(filePath, uploadedToYandex);
+            throw e;
         }
     }
 
@@ -175,5 +182,17 @@ public class YandexDriveImageService implements ImageService {
                 .toUriString();
 
         yandexRestTemplate.delete(url);
+    }
+
+    private void cleanupUploadedFile(String filePath, boolean uploadedToYandex) {
+        if (!uploadedToYandex) {
+            return;
+        }
+
+        try {
+            deleteFromYandex(filePath);
+        } catch (Exception cleanupEx) {
+            log.error("Failed to clean up uploaded file {}", filePath, cleanupEx);
+        }
     }
 }

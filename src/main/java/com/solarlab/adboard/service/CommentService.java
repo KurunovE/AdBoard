@@ -11,6 +11,7 @@ import com.solarlab.adboard.repository.CommentRepository;
 import com.solarlab.adboard.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CommentService {
 
@@ -54,6 +56,8 @@ public class CommentService {
         comment.setAuthor(author);
 
         Comment savedComment = commentRepository.save(comment);
+        log.info("Created comment id={} advertisementId={} authorEmail={}",
+                savedComment.getId(), advertisementId, author.getEmail());
         return commentMapper.toCommentResponse(savedComment);
     }
 
@@ -63,6 +67,7 @@ public class CommentService {
             throw new EntityNotFoundException("Comment with id " + id + " not found");
         }
         commentRepository.deleteById(id);
+        log.info("Deleted comment id={}", id);
     }
 
     private User getCurrentUser() {

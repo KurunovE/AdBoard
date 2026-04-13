@@ -15,14 +15,20 @@ import com.solarlab.adboard.repository.CategoryRepository;
 import com.solarlab.adboard.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AdvertisementService {
 
@@ -45,6 +51,7 @@ public class AdvertisementService {
                 .toList();
     }
 
+    @Cacheable(value = "advertisementById", key = "#id")
     @Transactional(readOnly = true)
     public AdvertisementResponse findById(Long id) {
         return advertisementRepository.findById(id)
@@ -54,6 +61,7 @@ public class AdvertisementService {
                 ));
     }
 
+    @CacheEvict(value = "advertisementById", allEntries = true)
     @Transactional
     public AdvertisementResponse create(AdvertisementCreateRequest request) {
         Category category = categoryRepository.findById(request.categoryId())
@@ -73,15 +81,24 @@ public class AdvertisementService {
                 .build();
 
         Advertisement savedAdvertisement = advertisementRepository.save(advertisement);
+        log.info("Created advertisement id={} for user={} in category={}",
+                savedAdvertisement.getId(), currentUser.getEmail(), category.getId());
         return advertisementMapper.toAdvertisementResponse(savedAdvertisement);
     }
 
+    @CacheEvict(value = "advertisementById", key = "#id")
     @Transactional
     public AdvertisementResponse update(Long id, AdvertisementUpdateRequest request) {
         Advertisement advertisement = advertisementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Advertisement with id " + id + " not found"
                 ));
+
+        String previousTitle = advertisement.getTitle();
+        BigDecimal previousPrice = advertisement.getPrice();
+        Long previousCategoryId = advertisement.getCategory() != null
+                ? advertisement.getCategory().getId()
+                : null;
 
         if (hasText(request.title())) {
             advertisement.setTitle(request.title());
@@ -101,9 +118,17 @@ public class AdvertisementService {
         }
 
         Advertisement updatedAdvertisement = advertisementRepository.save(advertisement);
+        log.info(
+                "Updated advertisement id={} titleChanged={} priceChanged={} categoryChanged={}",
+                updatedAdvertisement.getId(),
+                !Objects.equals(previousTitle, updatedAdvertisement.getTitle()),
+                !Objects.equals(previousPrice, updatedAdvertisement.getPrice()),
+                !Objects.equals(previousCategoryId, updatedAdvertisement.getCategory().getId())
+        );
         return advertisementMapper.toAdvertisementResponse(updatedAdvertisement);
     }
 
+    @CacheEvict(value = "advertisementById", key = "#id")
     @Transactional
     public AdvertisementResponse changeStatus(Long id, AdvertisementStatusUpdateRequest request) {
         Advertisement advertisement = advertisementRepository.findById(id)
@@ -112,21 +137,27 @@ public class AdvertisementService {
                 ));
 
         if (advertisement.getStatus() == request.status()) {
+            log.debug("Advertisement id={} already has status={}", id, request.status());
             return advertisementMapper.toAdvertisementResponse(advertisement);
         }
 
+        AdvertisementStatus previousStatus = advertisement.getStatus();
         advertisement.setStatus(request.status());
 
         Advertisement updatedAdvertisement = advertisementRepository.save(advertisement);
+        log.info("Changed advertisement id={} status {} -> {}",
+                updatedAdvertisement.getId(), previousStatus, updatedAdvertisement.getStatus());
         return advertisementMapper.toAdvertisementResponse(updatedAdvertisement);
     }
 
+    @CacheEvict(value = "advertisementById", key = "#id")
     @Transactional
     public void delete(Long id) {
         if (!advertisementRepository.existsById(id)) {
             throw new EntityNotFoundException("Advertisement with id " + id + " not found");
         }
         advertisementRepository.deleteById(id);
+        log.info("Deleted advertisement id={}", id);
     }
 
     private User getCurrentUser() {

@@ -7,10 +7,12 @@ import com.solarlab.adboard.model.User;
 import com.solarlab.adboard.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserService {
 
@@ -49,10 +51,12 @@ public class UserService {
         }
 
         if (!changed) {
+            log.debug("Skipped user update for id={} because request did not change state", id);
             return userMapper.toUserResponse(user);
         }
 
         User updatedUser = userRepository.save(user);
+        log.info("Updated user id={} email={}", updatedUser.getId(), updatedUser.getEmail());
         return userMapper.toUserResponse(updatedUser);
     }
 
@@ -65,6 +69,7 @@ public class UserService {
 
         keycloakAdminService.deleteUserByEmail(user.getEmail());
         userRepository.delete(user);
+        log.info("Deleted user id={} email={}", user.getId(), user.getEmail());
     }
 
     private boolean hasText(String value) {
