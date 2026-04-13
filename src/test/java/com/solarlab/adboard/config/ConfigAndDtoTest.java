@@ -1,0 +1,119 @@
+package com.solarlab.adboard.config;
+
+import com.solarlab.adboard.dto.request.keycloak.KeycloakLoginRequest;
+import com.solarlab.adboard.exception.YandexDiskException;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.ClientHttpRequestExecution;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.mock.http.client.MockClientHttpRequest;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
+
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+class ConfigAndDtoTest {
+
+    @Test
+    void keycloakPropertiesShouldBuildUrls() {
+        KeycloakProperties properties = new KeycloakProperties(
+                "http://localhost:9090",
+                "adboard",
+                "client",
+                "secret",
+                "admin",
+                "password",
+                "admin-cli"
+        );
+
+        assertEquals("http://localhost:9090/realms/adboard/protocol/openid-connect/token", properties.tokenUrl());
+        assertEquals("http://localhost:9090/realms/master/protocol/openid-connect/token", properties.adminTokenUrl());
+        assertEquals("http://localhost:9090/admin/realms/adboard/users", properties.usersUrl());
+        assertEquals("http://localhost:9090/admin/realms/adboard/clients", properties.clientsUrl());
+    }
+
+    @Test
+    void keycloakLoginRequestShouldBuildFormData() {
+        KeycloakLoginRequest request = KeycloakLoginRequest.builder()
+                .grantType("password")
+                .clientId("client")
+                .username("user@test.com")
+                .password("pass")
+                .scope("openid")
+                .clientSecret("secret")
+                .build();
+
+        var formData = request.toFormData();
+
+        assertEquals("password", formData.getFirst("grant_type"));
+        assertEquals("client", formData.getFirst("client_id"));
+        assertEquals("secret", formData.getFirst("client_secret"));
+    }
+
+    @Test
+    void restTemplateConfigShouldCreateTemplatesAndAttachYandexInterceptor() throws Exception {
+        RestTemplateConfig config = new RestTemplateConfig();
+        ReflectionTestUtils.setField(config, "yandexToken", "token");
+
+        RestTemplate defaultTemplate = config.restTemplate();
+        RestTemplate yandexTemplate = config.yandexRestTemplate();
+
+        assertNotNull(defaultTemplate);
+        assertEquals(1, yandexTemplate.getInterceptors().size());
+
+        ClientHttpRequestInterceptor interceptor = yandexTemplate.getInterceptors().getFirst();
+        MockClientHttpRequest request = new MockClientHttpRequest();
+        ClientHttpRequestExecution execution = (req, body) -> {
+            assertEquals("OAuth token", req.getHeaders().getFirst("Authorization"));
+            return new org.springframework.mock.http.client.MockClientHttpResponse(new byte[0], org.springframework.http.HttpStatus.OK);
+        };
+        interceptor.intercept(request, "body".getBytes(StandardCharsets.UTF_8), execution);
+    }
+
+    @Test
+    void jacksonConfigShouldCreateObjectMapper() {
+        assertNotNull(new JacksonConfig().objectMapper());
+    }
+
+    @Test
+    void jwtAuthConverterShouldConvertAuthorities() {
+        JwtAuthConverter converter = new JwtAuthConverter();
+        ReflectionTestUtils.setField(converter, "principleAttribute", "preferred_username");
+        ReflectionTestUtils.setField(converter, "resourceId", "adboard-client");
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("preferred_username", "user@test.com")
+                .claim("realm_access", Map.of("roles", List.of("user")))
+                .claim("resource_access", Map.of("adboard-client", Map.of("roles", List.of("admin"))))
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(60))
+                .build();
+
+        var token = converter.convert(jwt);
+
+        assertInstanceOf(JwtAuthenticationToken.class, token);
+        assertEquals("user@test.com", token.getName());
+        var authorities = token.getAuthorities();
+        assertEquals(true, authorities.contains(new SimpleGrantedAuthority("ROLE_USER")));
+        assertEquals(true, authorities.contains(new SimpleGrantedAuthority("ROLE_ADMIN")));
+    }
+
+    @Test
+    void yandexDiskExceptionShouldExposeFields() {
+        YandexDiskException exception = new YandexDiskException("fail", HttpStatusCode.valueOf(500), "body");
+
+        assertEquals("fail", exception.getMessage());
+        assertEquals(500, exception.getStatusCode().value());
+        assertEquals("body", exception.getResponseBody());
+    }
+}
