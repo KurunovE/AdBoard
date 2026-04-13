@@ -37,11 +37,12 @@ public class CommentController {
         return ResponseEntity.ok(commentService.createComment(advertisementId, commentRequest));
     }
 
-    @DeleteMapping("/{id}")
     @PreAuthorize("@securityUtils.isCommentOwner(#id)")
-    public void deleteComment(
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteComment(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {
         commentService.deleteComment(id);
+        return ResponseEntity.noContent().build();
     }
 }

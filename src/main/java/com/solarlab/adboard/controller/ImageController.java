@@ -31,8 +31,8 @@ public class ImageController {
         return ResponseEntity.ok(imageMapper.toImageResponse(image));
     }
 
-    @DeleteMapping("/{id}")
     @PreAuthorize("@securityUtils.isImageOwner(#id)")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteImage(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {

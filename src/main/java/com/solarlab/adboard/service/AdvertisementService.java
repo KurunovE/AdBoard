@@ -36,6 +36,7 @@ public class AdvertisementService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final AdvertisementMapper advertisementMapper;
+    private final ImageService imageService;
 
     @Transactional(readOnly = true)
     public List<AdvertisementResponse> findAll(AdvertisementFilter filter) {
@@ -153,11 +154,23 @@ public class AdvertisementService {
     @CacheEvict(value = "advertisementById", key = "#id")
     @Transactional
     public void delete(Long id) {
-        if (!advertisementRepository.existsById(id)) {
-            throw new EntityNotFoundException("Advertisement with id " + id + " not found");
+        Advertisement advertisement = advertisementRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Advertisement with id " + id + " not found"
+                ));
+
+        List<Long> imageIds = advertisement.getImages().stream()
+                .map(image -> image.getId())
+                .filter(Objects::nonNull)
+                .toList();
+
+        for (Long imageId : imageIds) {
+            imageService.deleteImage(imageId);
         }
+
         advertisementRepository.deleteById(id);
-        log.info("Deleted advertisement id={}", id);
+        log.info("Deleted advertisement id={} with imageCount={} and commentCount={}",
+                id, imageIds.size(), advertisement.getComments().size());
     }
 
     private User getCurrentUser() {
