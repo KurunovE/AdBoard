@@ -4,8 +4,15 @@ import com.solarlab.adboard.dto.request.advertisement.AdvertisementCreateRequest
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementFilter;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementStatusUpdateRequest;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementUpdateRequest;
+import com.solarlab.adboard.dto.response.ExceptionResponse;
 import com.solarlab.adboard.dto.response.advertisement.AdvertisementResponse;
 import com.solarlab.adboard.service.AdvertisementService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +28,17 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("v1/advertisements")
+@Tag(name = "Advertisements", description = "Operations with advertisements")
 public class AdvertisementController {
 
     private final AdvertisementService advertisementService;
 
+    @Operation(summary = "Get advertisements")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Advertisements returned"),
+            @ApiResponse(responseCode = "400", description = "Invalid filter",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
+    })
     @GetMapping
     public ResponseEntity<List<AdvertisementResponse>> getAdvertisements(
             @RequestParam(required = false) Long categoryId,
@@ -37,6 +51,14 @@ public class AdvertisementController {
         ));
     }
 
+    @Operation(summary = "Get advertisement by id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Advertisement returned"),
+            @ApiResponse(responseCode = "400", description = "Invalid id",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Advertisement not found",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
+    })
     @GetMapping("/{id}")
     public ResponseEntity<AdvertisementResponse> getAdvertisementById(
             @PositiveOrZero @PathVariable(name = "id") Long id
@@ -44,6 +66,14 @@ public class AdvertisementController {
         return ResponseEntity.ok(advertisementService.findById(id));
     }
 
+    @Operation(summary = "Create advertisement")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Advertisement created"),
+            @ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
+    })
     @PostMapping("/create")
     public ResponseEntity<AdvertisementResponse> createAdvertisement(
             @Valid @RequestBody AdvertisementCreateRequest request
@@ -51,6 +81,18 @@ public class AdvertisementController {
         return ResponseEntity.ok(advertisementService.create(request));
     }
 
+    @Operation(summary = "Update advertisement")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Advertisement updated"),
+            @ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Advertisement or category not found",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
+    })
     @PreAuthorize("@securityUtils.isAdvertisementOwner(#id)")
     @PutMapping("/{id}")
     public ResponseEntity<AdvertisementResponse> updateAdvertisement(
@@ -60,6 +102,18 @@ public class AdvertisementController {
         return ResponseEntity.ok(advertisementService.update(id, request));
     }
 
+    @Operation(summary = "Change advertisement status")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Status changed"),
+            @ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Advertisement not found",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
+    })
     @PreAuthorize("@securityUtils.isAdvertisementOwner(#id)")
     @PatchMapping("/{id}/status")
     public ResponseEntity<AdvertisementResponse> changeAdvertisementStatus(
@@ -69,6 +123,18 @@ public class AdvertisementController {
         return ResponseEntity.ok(advertisementService.changeStatus(id, request));
     }
 
+    @Operation(summary = "Delete advertisement")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Advertisement deleted"),
+            @ApiResponse(responseCode = "400", description = "Invalid id",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Advertisement not found",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
+    })
     @PreAuthorize("@securityUtils.isAdvertisementOwner(#id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAdvertisement(
