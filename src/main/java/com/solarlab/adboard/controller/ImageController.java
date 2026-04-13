@@ -19,15 +19,33 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Validated
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("v1/images")
+@RequestMapping("v1/advertisements/{advertisementId}/images")
 @Tag(name = "Images", description = "Operations with advertisement images")
 public class ImageController {
 
     private final ImageService imageService;
     private final ImageMapper imageMapper;
+
+    @Operation(summary = "Get advertisement images")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Images returned"),
+            @ApiResponse(responseCode = "400", description = "Invalid id",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Advertisement not found",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
+    })
+    @GetMapping
+    public ResponseEntity<List<ImageResponse>> getAdvertisementImages(
+            @PositiveOrZero @PathVariable Long advertisementId
+    ) {
+        List<Image> images = imageService.getAdvertisementImages(advertisementId);
+        return ResponseEntity.ok(imageMapper.toImageResponses(images));
+    }
 
     @Operation(summary = "Upload image for advertisement")
     @ApiResponses({
@@ -41,7 +59,7 @@ public class ImageController {
             @ApiResponse(responseCode = "404", description = "Advertisement not found",
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
-    @PostMapping("/advertisements/{advertisementId}/upload")
+    @PostMapping("/upload")
     @PreAuthorize("@securityUtils.isAdvertisementOwner(#advertisementId)")
     public ResponseEntity<ImageResponse> uploadImage(
             @PositiveOrZero @PathVariable(name = "advertisementId") Long advertisementId,

@@ -12,6 +12,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +30,23 @@ class ImageControllerTest {
     private ImageController imageController;
 
     @Test
-    void imageControllerShouldDelegate() {
+    void getAdvertisementImagesShouldReturnMappedList() {
+        Image firstImage = Image.builder().id(1L).build();
+        Image secondImage = Image.builder().id(2L).build();
+        ImageResponse firstResponse = ImageResponse.builder().id(1L).build();
+        ImageResponse secondResponse = ImageResponse.builder().id(2L).build();
+        when(imageService.getAdvertisementImages(1L)).thenReturn(List.of(firstImage, secondImage));
+        when(imageMapper.toImageResponses(List.of(firstImage, secondImage)))
+                .thenReturn(List.of(firstResponse, secondResponse));
+
+        assertEquals(
+                List.of(firstResponse, secondResponse),
+                imageController.getAdvertisementImages(1L).getBody()
+        );
+    }
+
+    @Test
+    void imageControllerShouldDelegateUploadAndDelete() {
         MockMultipartFile file = new MockMultipartFile("file", "a.txt", "text/plain", "x".getBytes());
         Image image = Image.builder().id(1L).build();
         ImageResponse response = ImageResponse.builder().id(1L).build();

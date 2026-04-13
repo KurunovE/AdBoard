@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -47,6 +48,18 @@ public class YandexDriveImageService implements ImageService {
         this.imageRepository = imageRepository;
         this.advertisementRepository = advertisementRepository;
         this.apiUrl = apiUrl;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Image> getAdvertisementImages(Long advertisementId) {
+        if (!advertisementRepository.existsById(advertisementId)) {
+            throw new EntityNotFoundException(
+                    "Advertisement with id " + advertisementId + " not found"
+            );
+        }
+
+        return imageRepository.findAllByAdvertisementIdOrderBySortOrderAsc(advertisementId);
     }
 
     @Override
