@@ -36,5 +36,6 @@ bin/
 /.nb-gradle/
 
 ### Локальные конфиги ###
-#.env
+.env
+application-local.yaml
 #*.local
