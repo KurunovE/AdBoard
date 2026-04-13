@@ -29,6 +29,12 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public List<CommentResponse> findAllCommentsByAdId(Long advertisementId) {
+        if (!advertisementRepository.existsById(advertisementId)) {
+            throw new EntityNotFoundException(
+                    "Advertisement with id " + advertisementId + " not found"
+            );
+        }
+
         return commentRepository.findAllByAdvertisementId(advertisementId).stream()
                 .map(commentMapper::toCommentResponse)
                 .toList();
@@ -38,7 +44,7 @@ public class CommentService {
     public CommentResponse createComment(Long advertisementId, CommentRequest commentRequest) {
         Advertisement advertisement = advertisementRepository.findById(advertisementId)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Advertisement whith id " + advertisementId + " not found"
+                        "Advertisement with id " + advertisementId + " not found"
                 ));
 
         User author = getCurrentUser();

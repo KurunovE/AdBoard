@@ -20,6 +20,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -160,10 +161,14 @@ public class KeycloakAdminService {
 
     public String findUserIdByEmail(String email) {
         String adminAccessToken = getAdminAccessToken();
+        String url = UriComponentsBuilder.fromUriString(keycloakProperties.usersUrl())
+                .queryParam("email", email)
+                .queryParam("exact", true)
+                .toUriString();
 
         try {
             ResponseEntity<KeycloakUserSummaryResponse[]> response = restTemplate.exchange(
-                    keycloakProperties.usersUrl() + "?email=" + email + "&exact=true",
+                    url,
                     HttpMethod.GET,
                     new HttpEntity<>(authorizedHeaders(adminAccessToken)),
                     KeycloakUserSummaryResponse[].class
