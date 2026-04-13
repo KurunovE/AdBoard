@@ -42,7 +42,7 @@ public class CategoryController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}/delete")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {

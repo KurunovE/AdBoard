@@ -70,7 +70,7 @@ public class AdvertisementController {
     }
 
     @PreAuthorize("@securityUtils.isAdvertisementOwner(#id)")
-    @DeleteMapping("/{id}/delete")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAdvertisement(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {

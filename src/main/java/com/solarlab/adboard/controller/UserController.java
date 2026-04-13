@@ -37,7 +37,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}/delete")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {

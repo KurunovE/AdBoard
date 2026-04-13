@@ -37,7 +37,7 @@ public class CommentController {
         return ResponseEntity.ok(commentService.createComment(advertisementId, commentRequest));
     }
 
-    @DeleteMapping("/{id}/delete")
+    @DeleteMapping("/{id}")
     @PreAuthorize("@securityUtils.isCommentOwner(#id)")
     public void deleteComment(
             @PositiveOrZero @PathVariable(name = "id") Long id
