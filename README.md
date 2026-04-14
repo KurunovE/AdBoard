@@ -58,8 +58,16 @@ Backend-сервис доски объявлений на `Spring Boot`.
 ### Аутентификация
 
 - `POST /v1/auth/register` создаёт пользователя в `Keycloak`, назначает роль `USER` и сохраняет локальную запись в БД
-- `POST /v1/auth/login` получает access token из `Keycloak`
+- `POST /v1/auth/login` получает из `Keycloak` пару `access_token` + `refresh_token`
+- `POST /v1/auth/refresh` обновляет пару токенов по `refresh_token`
+- `POST /v1/auth/logout` завершает сессию в `Keycloak` и инвалидирует `refresh_token`
 - API работает как `OAuth2 Resource Server` и валидирует JWT токены
+
+Клиентский flow:
+- после `login` клиент сохраняет `access_token` и `refresh_token`
+- при истечении `access_token` клиент вызывает `POST /v1/auth/refresh`
+- после успешного refresh клиент заменяет оба токена
+- при выходе клиент вызывает `POST /v1/auth/logout` и удаляет локально сохранённые токены
 
 ### Авторизация
 
@@ -113,10 +121,10 @@ Backend-сервис доски объявлений на `Spring Boot`.
 ## Конфигурация
 
 Основной конфиг:
-- [application.yaml](/c:/Users/eegor/Desktop/project/AdBoard/src/main/resources/application.yaml)
+- [application.yaml](/AdBoard/src/main/resources/application.yaml)
 
 Локальный профиль:
-- [application-local.yaml](/c:/Users/eegor/Desktop/project/AdBoard/src/main/resources/application-local.yaml)
+- [application-local.yaml](/AdBoard/src/main/resources/application-local.yaml)
 
 По умолчанию активен профиль:
 - `local`
@@ -134,8 +142,8 @@ SERVER_PORT=8081
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=adboard_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
+POSTGRES_USER=user
+POSTGRES_PASSWORD=password
 
 KEYCLOAK_PORT=9090
 KEYCLOAK_ISSUER_URI=http://localhost:9090/realms/adboard
@@ -145,12 +153,12 @@ KEYCLOAK_AUTH_SERVER_URL=http://localhost:9090
 KEYCLOAK_REALM=adboard
 KEYCLOAK_CLIENT_ID=adboard-client
 KEYCLOAK_CLIENT_SECRET=your-client-secret
-KEYCLOAK_ADMIN_USERNAME=admin
-KEYCLOAK_ADMIN_PASSWORD=admin
+KEYCLOAK_ADMIN_USERNAME=admin_username
+KEYCLOAK_ADMIN_PASSWORD=admin_password
 KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
 
 KEYCLOAK_ADMIN=admin
-KEYCLOAK_ADMIN_PASSWORD=admin
+KEYCLOAK_ADMIN_PASSWORD=admin_password
 
 YANDEX_DISK_TOKEN=your-yandex-disk-token
 ```
@@ -200,6 +208,8 @@ OpenAPI JSON:
 ### Auth
 
 - `POST /v1/auth/login`
+- `POST /v1/auth/refresh`
+- `POST /v1/auth/logout`
 - `POST /v1/auth/register`
 
 ### Advertisements
@@ -270,6 +280,55 @@ Content-Type: application/json
 }
 ```
 
+Пример успешного ответа:
+
+```json
+{
+  "access_token": "<access_token>",
+  "refresh_token": "<refresh_token>",
+  "expires_in": 300,
+  "refresh_expires_in": 1800,
+  "token_type": "Bearer"
+}
+```
+
+### Обновление токена
+
+```http
+POST /v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "<refresh_token>"
+}
+```
+
+Пример успешного ответа:
+
+```json
+{
+  "access_token": "<new_access_token>",
+  "refresh_token": "<new_refresh_token>",
+  "expires_in": 300,
+  "refresh_expires_in": 1800,
+  "token_type": "Bearer"
+}
+```
+
+### Выход
+
+```http
+POST /v1/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "<refresh_token>"
+}
+```
+
+Успешный ответ:
+- `204 No Content`
+
 ### Создание объявления
 
 ```http
@@ -335,9 +394,3 @@ Hibernate работает в режиме:
 ```powershell
 .\gradlew.bat test
 ```
-
-## Что важно знать
-
-- проект использует `MapStruct` для маппинга сущностей и DTO
-- `SecurityUtils` централизует owner-based проверки доступа
-- `GlobalExceptionHandler` приводит ошибки к единому JSON-формату
