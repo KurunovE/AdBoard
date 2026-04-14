@@ -2,6 +2,8 @@ package com.solarlab.adboard.service;
 
 import com.solarlab.adboard.config.KeycloakProperties;
 import com.solarlab.adboard.dto.request.auth.LoginRequest;
+import com.solarlab.adboard.dto.request.auth.LogoutRequest;
+import com.solarlab.adboard.dto.request.auth.RefreshTokenRequest;
 import com.solarlab.adboard.dto.request.user.UserRequestRegistration;
 import com.solarlab.adboard.dto.response.auth.LoginResponse;
 import com.solarlab.adboard.dto.response.user.UserResponseRegistration;
@@ -130,6 +132,65 @@ class AuthServiceTest {
 
         assertThrows(IllegalArgumentException.class, () ->
                 authService.login(new LoginRequest("user@test.com", "pass"))
+        );
+    }
+
+    @Test
+    void refreshTokenShouldReturnBodyOnSuccess() {
+        when(keycloakProperties.clientId()).thenReturn("client");
+        when(keycloakProperties.clientSecret()).thenReturn("secret");
+        when(keycloakProperties.tokenUrl()).thenReturn("http://token");
+        LoginResponse loginResponse = new LoginResponse("access-2", "refresh-2", 10L, 10L, "Bearer");
+        when(restTemplate.postForEntity(eq("http://token"), any(), eq(LoginResponse.class)))
+                .thenReturn(ResponseEntity.ok(loginResponse));
+
+        LoginResponse result = authService.refreshToken(new RefreshTokenRequest("refresh-1"));
+
+        assertEquals(loginResponse, result);
+    }
+
+    @Test
+    void refreshTokenShouldMapInvalidTokenToIllegalArgument() {
+        when(keycloakProperties.clientId()).thenReturn("client");
+        when(keycloakProperties.clientSecret()).thenReturn(null);
+        when(keycloakProperties.tokenUrl()).thenReturn("http://token");
+        HttpClientErrorException exception = HttpClientErrorException.create(
+                HttpStatus.BAD_REQUEST, "Bad Request", null, new byte[0], StandardCharsets.UTF_8
+        );
+        when(restTemplate.postForEntity(eq("http://token"), any(), eq(LoginResponse.class)))
+                .thenThrow(exception);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                authService.refreshToken(new RefreshTokenRequest("refresh-1"))
+        );
+    }
+
+    @Test
+    void logoutShouldCallKeycloakOnSuccess() {
+        when(keycloakProperties.clientId()).thenReturn("client");
+        when(keycloakProperties.clientSecret()).thenReturn("secret");
+        when(keycloakProperties.logoutUrl()).thenReturn("http://logout");
+        when(restTemplate.postForEntity(eq("http://logout"), any(), eq(Void.class)))
+                .thenReturn(ResponseEntity.noContent().build());
+
+        authService.logout(new LogoutRequest("refresh-1"));
+
+        verify(restTemplate).postForEntity(eq("http://logout"), any(), eq(Void.class));
+    }
+
+    @Test
+    void logoutShouldMapInvalidTokenToIllegalArgument() {
+        when(keycloakProperties.clientId()).thenReturn("client");
+        when(keycloakProperties.clientSecret()).thenReturn(null);
+        when(keycloakProperties.logoutUrl()).thenReturn("http://logout");
+        HttpClientErrorException exception = HttpClientErrorException.create(
+                HttpStatus.BAD_REQUEST, "Bad Request", null, new byte[0], StandardCharsets.UTF_8
+        );
+        when(restTemplate.postForEntity(eq("http://logout"), any(), eq(Void.class)))
+                .thenThrow(exception);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                authService.logout(new LogoutRequest("refresh-1"))
         );
     }
 }

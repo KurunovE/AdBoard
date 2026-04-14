@@ -2,6 +2,8 @@ package com.solarlab.adboard.service;
 
 import com.solarlab.adboard.config.KeycloakProperties;
 import com.solarlab.adboard.dto.request.auth.LoginRequest;
+import com.solarlab.adboard.dto.request.auth.LogoutRequest;
+import com.solarlab.adboard.dto.request.auth.RefreshTokenRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakCredentialRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakLoginRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakUserCreateRequest;
@@ -20,6 +22,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -101,6 +105,76 @@ public class AuthService {
             if (ex.getStatusCode().value() == 400 || ex.getStatusCode().value() == 401) {
                 log.warn("Login rejected for email={}", loginRequest.email());
                 throw new IllegalArgumentException("Invalid email or password");
+            }
+            throw ex;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public LoginResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("grant_type", "refresh_token");
+        formData.add("client_id", keycloakProperties.clientId());
+        formData.add("refresh_token", refreshTokenRequest.refreshToken());
+
+        if (hasText(keycloakProperties.clientSecret())) {
+            formData.add("client_secret", keycloakProperties.clientSecret());
+        }
+
+        HttpEntity<?> request = new HttpEntity<>(formData, headers);
+
+        try {
+            ResponseEntity<LoginResponse> response = restTemplate.postForEntity(
+                    keycloakProperties.tokenUrl(),
+                    request,
+                    LoginResponse.class
+            );
+
+            LoginResponse loginResponse = response.getBody();
+            if (loginResponse == null || !hasText(loginResponse.accessToken())) {
+                throw new IllegalStateException("Keycloak returned an empty refresh response");
+            }
+
+            log.info("Successful token refresh");
+            return loginResponse;
+        } catch (HttpClientErrorException ex) {
+            if (ex.getStatusCode().value() == 400 || ex.getStatusCode().value() == 401) {
+                log.warn("Refresh token rejected");
+                throw new IllegalArgumentException("Invalid or expired refresh token");
+            }
+            throw ex;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public void logout(LogoutRequest logoutRequest) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("client_id", keycloakProperties.clientId());
+        formData.add("refresh_token", logoutRequest.refreshToken());
+
+        if (hasText(keycloakProperties.clientSecret())) {
+            formData.add("client_secret", keycloakProperties.clientSecret());
+        }
+
+        HttpEntity<?> request = new HttpEntity<>(formData, headers);
+
+        try {
+            restTemplate.postForEntity(
+                    keycloakProperties.logoutUrl(),
+                    request,
+                    Void.class
+            );
+            log.info("Successful logout");
+        } catch (HttpClientErrorException ex) {
+            if (ex.getStatusCode().value() == 400 || ex.getStatusCode().value() == 401) {
+                log.warn("Logout rejected due to invalid refresh token");
+                throw new IllegalArgumentException("Invalid or expired refresh token");
             }
             throw ex;
         }

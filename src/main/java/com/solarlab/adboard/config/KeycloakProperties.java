@@ -17,6 +17,10 @@ public record KeycloakProperties(
         return authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token";
     }
 
+    public String logoutUrl() {
+        return authServerUrl + "/realms/" + realm + "/protocol/openid-connect/logout";
+    }
+
     public String adminTokenUrl() {
         return authServerUrl + "/realms/master/protocol/openid-connect/token";
     }
