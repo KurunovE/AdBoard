@@ -1,5 +1,6 @@
 package com.solarlab.adboard.service;
 
+import com.solarlab.adboard.config.CurrentUserProvider;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementCreateRequest;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementFilter;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementStatusUpdateRequest;
@@ -18,8 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +31,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class AdvertisementService {
 
+    private final CurrentUserProvider currentUserProvider;
     private final AdvertisementRepository advertisementRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
@@ -174,16 +174,13 @@ public class AdvertisementService {
     }
 
     private User getCurrentUser() {
-        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String email = jwt.getClaimAsString("email");
-        if (email == null) {
-            email = jwt.getClaimAsString("preferred_username");
-        }
+        String email = currentUserProvider.getCurrentUser()
+                .map(current -> current.email())
+                .orElseThrow(() -> new EntityNotFoundException("Authenticated user not found"));
 
-        String finalEmail = email;
-        return userRepository.findByEmail(finalEmail)
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "User with email " + finalEmail + " not found"
+                        "User with email " + email + " not found"
                 ));
     }
 

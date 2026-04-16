@@ -1,5 +1,6 @@
 package com.solarlab.adboard.service;
 
+import com.solarlab.adboard.config.CurrentUserProvider;
 import com.solarlab.adboard.dto.request.comment.CommentRequest;
 import com.solarlab.adboard.dto.response.comment.CommentResponse;
 import com.solarlab.adboard.mapper.CommentMapper;
@@ -12,8 +13,6 @@ import com.solarlab.adboard.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommentService {
 
+    private final CurrentUserProvider currentUserProvider;
     private final CommentRepository commentRepository;
     private final AdvertisementRepository advertisementRepository;
     private final UserRepository userRepository;
@@ -71,15 +71,13 @@ public class CommentService {
     }
 
     private User getCurrentUser() {
-        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String email = jwt.getClaimAsString("email");
-        if (email == null) {
-            email = jwt.getClaimAsString("preferred_username");
-        }
-        final String finalEmail = email;
+        String email = currentUserProvider.getCurrentUser()
+                .map(current -> current.email())
+                .orElseThrow(() -> new EntityNotFoundException("Authenticated user not found"));
+
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "User with email " + finalEmail + " not found"
+                        "User with email " + email + " not found"
                 ));
     }
 }

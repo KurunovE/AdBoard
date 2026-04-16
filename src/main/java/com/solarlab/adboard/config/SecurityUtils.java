@@ -6,121 +6,58 @@ import com.solarlab.adboard.repository.CommentRepository;
 import com.solarlab.adboard.repository.ImageRepository;
 import com.solarlab.adboard.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
-import java.util.Optional;
+import java.util.function.Function;
 
 @Component("securityUtils")
 @RequiredArgsConstructor
 public class SecurityUtils {
 
+    private final CurrentUserProvider currentUserProvider;
     private final UserRepository userRepository;
     private final AdvertisementRepository advertisementRepository;
     private final CommentRepository commentRepository;
     private final ImageRepository imageRepository;
 
     public boolean isOwner(Long userId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-            return false;
-        }
-
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        String currentEmail = jwt.getClaimAsString("email");
-        
-        if (currentEmail == null) {
-            currentEmail = jwt.getClaimAsString("preferred_username");
-        }
-
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(),
-                        "ROLE_ADMIN"));
-
-        if (isAdmin) return true;
-
-        Optional<User> user = userRepository.findById(userId);
-        return user.isPresent() && user.get().getEmail().equals(currentEmail);
+        return checkOwnership(current -> userRepository.findById(userId)
+                .map(User::getEmail)
+                .map(email -> Objects.equals(email, current.email()))
+                .orElse(false));
     }
 
     public boolean isAdvertisementOwner(Long advertisementId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-            return false;
-        }
-
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        String currentEmail = jwt.getClaimAsString("email");
-        if (currentEmail == null) {
-            currentEmail = jwt.getClaimAsString("preferred_username");
-        }
-
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
-
-        if (isAdmin) return true;
-
-        final String finalCurrentEmail = currentEmail;
-        return advertisementRepository.findById(advertisementId)
+        return checkOwnership(current -> advertisementRepository.findById(advertisementId)
                 .map(advertisement -> Objects.equals(
                         advertisement.getAuthor().getEmail(),
-                        finalCurrentEmail
+                        current.email()
                 ))
-                .orElse(false);
+                .orElse(false));
     }
 
     public boolean isCommentOwner(Long commentId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-            return false;
-        }
-
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        String currentEmail = jwt.getClaimAsString("email");
-        if (currentEmail == null) {
-            currentEmail = jwt.getClaimAsString("preferred_username");
-        }
-
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
-
-        if (isAdmin) return true;
-
-        final String finalCurrentEmail = currentEmail;
-        return commentRepository.findById(commentId)
+        return checkOwnership(current -> commentRepository.findById(commentId)
                 .map(comment -> Objects.equals(
                         comment.getAuthor().getEmail(),
-                        finalCurrentEmail
+                        current.email()
                 ))
-                .orElse(false);
+                .orElse(false));
     }
 
     public boolean isImageOwner(Long imageId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-            return false;
-        }
-
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        String currentEmail = jwt.getClaimAsString("email");
-        if (currentEmail == null) {
-            currentEmail = jwt.getClaimAsString("preferred_username");
-        }
-
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
-
-        if (isAdmin) return true;
-
-        final String finalCurrentEmail = currentEmail;
-        return imageRepository.findById(imageId)
+        return checkOwnership(current -> imageRepository.findById(imageId)
                 .map(image -> Objects.equals(
                         image.getAdvertisement().getAuthor().getEmail(),
-                        finalCurrentEmail
+                        current.email()
                 ))
+                .orElse(false));
+    }
+
+    private boolean checkOwnership(Function<CurrentUserContext, Boolean> rule) {
+        return currentUserProvider.getCurrentUser()
+                .map(current -> current.admin() || rule.apply(current))
                 .orElse(false);
     }
 }

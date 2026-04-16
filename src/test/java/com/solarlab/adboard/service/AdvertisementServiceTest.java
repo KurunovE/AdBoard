@@ -1,5 +1,7 @@
 package com.solarlab.adboard.service;
 
+import com.solarlab.adboard.config.CurrentUserContext;
+import com.solarlab.adboard.config.CurrentUserProvider;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementCreateRequest;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementFilter;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementStatusUpdateRequest;
@@ -16,19 +18,14 @@ import com.solarlab.adboard.repository.AdvertisementRepository;
 import com.solarlab.adboard.repository.CategoryRepository;
 import com.solarlab.adboard.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +39,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AdvertisementServiceTest {
 
+    @Mock
+    private CurrentUserProvider currentUserProvider;
     @Mock
     private AdvertisementRepository advertisementRepository;
     @Mock
@@ -77,11 +76,6 @@ class AdvertisementServiceTest {
                 .comments(List.of())
                 .build();
         response = AdvertisementResponse.builder().id(1L).title("Laptop").build();
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -128,7 +122,8 @@ class AdvertisementServiceTest {
 
     @Test
     void createShouldSaveAdvertisementForCurrentUser() {
-        mockAuthenticatedUser("user@test.com");
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(Optional.of(new CurrentUserContext("user@test.com", false)));
         when(categoryRepository.findById(10L)).thenReturn(Optional.of(category));
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
         when(advertisementRepository.save(any(Advertisement.class)))
@@ -193,16 +188,5 @@ class AdvertisementServiceTest {
 
         verify(imageService).deleteImage(100L);
         verify(advertisementRepository).deleteById(1L);
-    }
-
-    private void mockAuthenticatedUser(String email) {
-        Jwt jwt = Jwt.withTokenValue("token")
-                .header("alg", "none")
-                .claim("email", email)
-                .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plusSeconds(60))
-                .build();
-        SecurityContextHolder.getContext()
-                .setAuthentication(new TestingAuthenticationToken(jwt, null));
     }
 }

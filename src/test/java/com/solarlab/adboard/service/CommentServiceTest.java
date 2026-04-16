@@ -1,5 +1,7 @@
 package com.solarlab.adboard.service;
 
+import com.solarlab.adboard.config.CurrentUserContext;
+import com.solarlab.adboard.config.CurrentUserProvider;
 import com.solarlab.adboard.dto.request.comment.CommentRequest;
 import com.solarlab.adboard.dto.response.comment.CommentResponse;
 import com.solarlab.adboard.mapper.CommentMapper;
@@ -10,17 +12,12 @@ import com.solarlab.adboard.repository.AdvertisementRepository;
 import com.solarlab.adboard.repository.CommentRepository;
 import com.solarlab.adboard.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +30,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
 
+    @Mock private CurrentUserProvider currentUserProvider;
     @Mock private CommentRepository commentRepository;
     @Mock private AdvertisementRepository advertisementRepository;
     @Mock private UserRepository userRepository;
@@ -40,11 +38,6 @@ class CommentServiceTest {
 
     @InjectMocks
     private CommentService commentService;
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
 
     @Test
     void findAllCommentsByAdIdShouldThrowWhenAdvertisementMissing() {
@@ -90,7 +83,8 @@ class CommentServiceTest {
                 .id(10L)
                 .text("Hello")
                 .build();
-        mockAuthenticatedUser("user@test.com");
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(Optional.of(new CurrentUserContext("user@test.com", false)));
         when(advertisementRepository.findById(1L)).thenReturn(Optional.of(advertisement));
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
         when(commentMapper.toEntity(any(CommentRequest.class))).thenReturn(comment);
@@ -109,15 +103,5 @@ class CommentServiceTest {
         commentService.deleteComment(1L);
 
         verify(commentRepository).deleteById(1L);
-    }
-
-    private void mockAuthenticatedUser(String email) {
-        Jwt jwt = Jwt.withTokenValue("token")
-                .header("alg", "none")
-                .claim("email", email)
-                .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plusSeconds(60))
-                .build();
-        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(jwt, null));
     }
 }

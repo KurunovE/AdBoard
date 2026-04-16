@@ -8,6 +8,7 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.mock.http.client.MockClientHttpRequest;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -21,6 +22,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConfigAndDtoTest {
 
@@ -106,6 +108,56 @@ class ConfigAndDtoTest {
         var authorities = token.getAuthorities();
         assertEquals(true, authorities.contains(new SimpleGrantedAuthority("ROLE_USER")));
         assertEquals(true, authorities.contains(new SimpleGrantedAuthority("ROLE_ADMIN")));
+    }
+
+    @Test
+    void currentUserProviderShouldReadEmailClaimAndAdminRole() {
+        CurrentUserProvider provider = new CurrentUserProvider();
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("email", "user@test.com")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(60))
+                .build();
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))
+        );
+
+        try {
+            var result = provider.getCurrentUser();
+
+            assertTrue(result.isPresent());
+            assertEquals("user@test.com", result.get().email());
+            assertTrue(result.get().admin());
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    @Test
+    void currentUserProviderShouldFallbackToPreferredUsername() {
+        CurrentUserProvider provider = new CurrentUserProvider();
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("preferred_username", "fallback@test.com")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(60))
+                .build();
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new JwtAuthenticationToken(jwt, List.of())
+        );
+
+        try {
+            var result = provider.getCurrentUser();
+
+            assertTrue(result.isPresent());
+            assertEquals("fallback@test.com", result.get().email());
+            assertEquals(false, result.get().admin());
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     @Test
