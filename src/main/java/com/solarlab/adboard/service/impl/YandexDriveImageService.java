@@ -140,7 +140,7 @@ public class YandexDriveImageService implements ImageService {
     public void deleteImage(Long imageId) {
         Image image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Image with: " + imageId + " not found"
+                        "Image with id " + imageId + " not found"
                 ));
 
         try {
