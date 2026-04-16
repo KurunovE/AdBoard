@@ -50,7 +50,6 @@ Backend-сервис доски объявлений на `Spring Boot`.
 - `src/main/java/com/solarlab/adboard/dto` - DTO запросов и ответов
 - `src/main/java/com/solarlab/adboard/mapper` - MapStruct-мапперы
 - `src/main/java/com/solarlab/adboard/config` - security, converters, properties, rest clients
-- `CurrentUserProvider` в `config` извлекает email и роль администратора из JWT и отдаёт единый `CurrentUserContext`
 - `src/main/resources/db/migration` - SQL-миграции Flyway
 - `src/test/java/com/solarlab/adboard` - unit и controller tests
 
@@ -82,10 +81,13 @@ Backend-сервис доски объявлений на `Spring Boot`.
 
 Все остальные запросы требуют JWT.
 
+Текущий пользователь извлекается централизованно:
+- `CurrentUserProvider` читает `email` или `preferred_username` из JWT
+- `CurrentUserProvider` определяет наличие `ROLE_ADMIN` и возвращает `CurrentUserContext`
+- `SecurityUtils`, `AdvertisementService` и `CommentService` используют этот общий источник вместо прямой работы с `SecurityContextHolder`
+
 Дополнительно используется проверка владельца ресурса:
-- `CurrentUserProvider` читает `email` или `preferred_username` из JWT и определяет наличие `ROLE_ADMIN`
 - `SecurityUtils` использует `CurrentUserProvider` для owner-based проверок в `@PreAuthorize`
-- `AdvertisementService` и `CommentService` переиспользуют тот же источник текущего пользователя вместо прямой работы с `SecurityContextHolder`
 - пользователь может читать и обновлять свой профиль
 - владелец объявления может обновлять, закрывать и удалять своё объявление
 - владелец объявления может загружать изображения к своему объявлению
@@ -125,10 +127,10 @@ Backend-сервис доски объявлений на `Spring Boot`.
 ## Конфигурация
 
 Основной конфиг:
-- [application.yaml](/AdBoard/src/main/resources/application.yaml)
+- [application.yaml](src/main/resources/application.yaml)
 
 Локальный профиль:
-- [application-local.yaml](/AdBoard/src/main/resources/application-local.yaml)
+- [application-local.yaml](src/main/resources/application-local.yaml)
 
 По умолчанию активен профиль:
 - `local`
