@@ -1,6 +1,7 @@
 package com.solarlab.adboard.service;
 
 import com.solarlab.adboard.dto.request.category.CategoryRequest;
+import com.solarlab.adboard.dto.request.category.CategoryUpdateRequest;
 import com.solarlab.adboard.dto.response.category.CategoryResponse;
 import com.solarlab.adboard.mapper.CategoryMapper;
 import com.solarlab.adboard.model.Category;
@@ -36,7 +37,7 @@ class CategoryServiceTest {
                 .id(1L)
                 .name("Tech")
                 .build();
-        CategoryResponse response = new CategoryResponse(1L, "Tech", null, null);
+        CategoryResponse response = new CategoryResponse(1L, "Tech", null);
         when(categoryRepository.findAll()).thenReturn(List.of(category));
         when(categoryMapper.toCategoryResponse(category)).thenReturn(response);
 
@@ -63,13 +64,54 @@ class CategoryServiceTest {
                 .id(1L)
                 .name("Phones")
                 .build();
-        CategoryResponse response = new CategoryResponse(1L, "Phones", 10L, "Parent");
+        CategoryResponse response = new CategoryResponse(1L, "Phones", 10L);
         when(categoryRepository.findById(10L)).thenReturn(Optional.of(parent));
         when(categoryMapper.toEntity(request)).thenReturn(entity);
         when(categoryRepository.save(entity)).thenReturn(saved);
         when(categoryMapper.toCategoryResponse(saved)).thenReturn(response);
 
         assertEquals(response, categoryService.createCategory(request));
+    }
+
+    @Test
+    void updateCategoryShouldUpdateNameAndParent() {
+        CategoryUpdateRequest request = new CategoryUpdateRequest("Phones", 10L);
+        Category category = Category.builder()
+                .id(1L)
+                .name("Old")
+                .build();
+        Category parent = Category.builder()
+                .id(10L)
+                .name("Parent")
+                .build();
+        Category saved = Category.builder()
+                .id(1L)
+                .name("Phones")
+                .parent(parent)
+                .build();
+        CategoryResponse response = new CategoryResponse(1L, "Phones", 10L);
+
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(categoryRepository.findById(10L)).thenReturn(Optional.of(parent));
+        when(categoryRepository.save(category)).thenReturn(saved);
+        when(categoryMapper.toCategoryResponse(saved)).thenReturn(response);
+
+        assertEquals(response, categoryService.updateCategory(1L, request));
+        assertEquals("Phones", category.getName());
+        assertEquals(parent, category.getParent());
+    }
+
+    @Test
+    void updateCategoryShouldRejectSelfParent() {
+        Category category = Category.builder()
+                .id(1L)
+                .name("Tech")
+                .build();
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+
+        assertThrows(IllegalArgumentException.class, () -> categoryService.updateCategory(
+                1L, new CategoryUpdateRequest("Tech", 1L)
+        ));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.solarlab.adboard.controller;
 
 import com.solarlab.adboard.dto.request.category.CategoryRequest;
+import com.solarlab.adboard.dto.request.category.CategoryUpdateRequest;
 import com.solarlab.adboard.dto.response.ExceptionResponse;
 import com.solarlab.adboard.dto.response.category.CategoryResponse;
 import com.solarlab.adboard.service.CategoryService;
@@ -69,6 +70,27 @@ public class CategoryController {
             @Valid @RequestBody CategoryRequest categoryRequest
     ) {
         return ResponseEntity.ok(categoryService.createCategory(categoryRequest));
+    }
+
+    @Operation(summary = "Update category")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Category updated"),
+            @ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Category not found",
+                    content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoryResponse> updateCategory(
+            @PositiveOrZero @PathVariable(name = "id") Long id,
+            @Valid @RequestBody CategoryUpdateRequest categoryUpdateRequest
+    ) {
+        return ResponseEntity.ok(categoryService.updateCategory(id, categoryUpdateRequest));
     }
 
     @Operation(summary = "Delete category")
