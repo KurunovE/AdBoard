@@ -1,7 +1,6 @@
-package com.solarlab.adboard.controller;
+package com.solarlab.adboard.exception;
 
 import com.solarlab.adboard.dto.response.ExceptionResponse;
-import com.solarlab.adboard.exception.YandexDiskException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;

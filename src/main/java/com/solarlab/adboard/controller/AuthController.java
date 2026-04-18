@@ -3,10 +3,10 @@ package com.solarlab.adboard.controller;
 import com.solarlab.adboard.dto.request.auth.LoginRequest;
 import com.solarlab.adboard.dto.request.auth.LogoutRequest;
 import com.solarlab.adboard.dto.request.auth.RefreshTokenRequest;
-import com.solarlab.adboard.dto.request.user.UserRequestRegistration;
+import com.solarlab.adboard.dto.request.user.UserRegistrationRequest;
 import com.solarlab.adboard.dto.response.ExceptionResponse;
 import com.solarlab.adboard.dto.response.auth.LoginResponse;
-import com.solarlab.adboard.dto.response.user.UserResponseRegistration;
+import com.solarlab.adboard.dto.response.user.UserRegistrationResponse;
 import com.solarlab.adboard.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -88,9 +88,9 @@ public class AuthController {
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
     @PostMapping("/register")
-    public ResponseEntity<UserResponseRegistration> register(
-            @Valid @RequestBody UserRequestRegistration userRequestRegistration
+    public ResponseEntity<UserRegistrationResponse> register(
+            @Valid @RequestBody UserRegistrationRequest registrationRequest
     ) {
-        return ResponseEntity.ok(authService.registerUser(userRequestRegistration));
+        return ResponseEntity.ok(authService.registerUser(registrationRequest));
     }
 }

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record AdvertisementCreateRequest(
-        @NotBlank(message = "Title cannot be null")
+        @NotBlank(message = "Title cannot be blank")
         String title,
 
         String description,
@@ -16,7 +16,7 @@ public record AdvertisementCreateRequest(
         @DecimalMin("0.0")
         BigDecimal price,
 
-        @NotNull(message = "CategoryId cannot be null")
+        @NotNull(message = "categoryId cannot be null")
         Long categoryId
 ) {
 }

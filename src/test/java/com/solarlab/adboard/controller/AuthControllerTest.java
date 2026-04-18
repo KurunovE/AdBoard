@@ -3,9 +3,9 @@ package com.solarlab.adboard.controller;
 import com.solarlab.adboard.dto.request.auth.LoginRequest;
 import com.solarlab.adboard.dto.request.auth.LogoutRequest;
 import com.solarlab.adboard.dto.request.auth.RefreshTokenRequest;
-import com.solarlab.adboard.dto.request.user.UserRequestRegistration;
+import com.solarlab.adboard.dto.request.user.UserRegistrationRequest;
 import com.solarlab.adboard.dto.response.auth.LoginResponse;
-import com.solarlab.adboard.dto.response.user.UserResponseRegistration;
+import com.solarlab.adboard.dto.response.user.UserRegistrationResponse;
 import com.solarlab.adboard.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,10 +63,10 @@ class AuthControllerTest {
 
     @Test
     void registerShouldDelegate() {
-        UserRequestRegistration registration = new UserRequestRegistration(
+        UserRegistrationRequest registration = new UserRegistrationRequest(
                 "User", "user@test.com", "+123", "pass"
         );
-        UserResponseRegistration response = UserResponseRegistration.builder()
+        UserRegistrationResponse response = UserRegistrationResponse.builder()
                 .id(1L)
                 .email("user@test.com")
                 .build();

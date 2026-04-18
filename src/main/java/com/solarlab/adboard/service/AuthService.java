@@ -9,9 +9,9 @@ import com.solarlab.adboard.dto.request.keycloak.KeycloakLoginRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakLogoutRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakRefreshTokenRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakUserCreateRequest;
-import com.solarlab.adboard.dto.request.user.UserRequestRegistration;
+import com.solarlab.adboard.dto.request.user.UserRegistrationRequest;
 import com.solarlab.adboard.dto.response.auth.LoginResponse;
-import com.solarlab.adboard.dto.response.user.UserResponseRegistration;
+import com.solarlab.adboard.dto.response.user.UserRegistrationResponse;
 import com.solarlab.adboard.mapper.UserMapper;
 import com.solarlab.adboard.model.User;
 import com.solarlab.adboard.repository.UserRepository;
@@ -43,30 +43,30 @@ public class AuthService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
-    public UserResponseRegistration registerUser(UserRequestRegistration userRequestRegistration) {
-        if (userRepository.findByEmail(userRequestRegistration.email()).isPresent()) {
-            log.warn("Registration rejected for existing email={}", userRequestRegistration.email());
+    public UserRegistrationResponse registerUser(UserRegistrationRequest registrationRequest) {
+        if (userRepository.findByEmail(registrationRequest.email()).isPresent()) {
+            log.warn("Registration rejected for existing email={}", registrationRequest.email());
             throw new IllegalArgumentException(
-                    "User with email " + userRequestRegistration.email() + " already exists"
+                    "User with email " + registrationRequest.email() + " already exists"
             );
         }
 
         String keycloakUserId = keycloakAdminService.createUser(
-                buildKeycloakUserCreateRequest(userRequestRegistration));
+                buildKeycloakUserCreateRequest(registrationRequest));
 
         try {
             keycloakAdminService.assignClientRoleToUser(keycloakUserId, "USER");
-            User savedUser = userRepository.save(buildLocalUser(userRequestRegistration));
+            User savedUser = userRepository.save(buildLocalUser(registrationRequest));
             applicationEventPublisher.publishEvent(new UserRegisteredEvent(
                     savedUser.getId(),
                     savedUser.getName(),
                     savedUser.getEmail()
             ));
             log.info("Registered user email={} localId={}", savedUser.getEmail(), savedUser.getId());
-            return userMapper.toUserResponseRegistration(savedUser);
+            return userMapper.toUserRegistrationResponse(savedUser);
         } catch (RuntimeException ex) {
             log.warn("Registration failed after Keycloak user creation for email={}, rolling back Keycloak userId={}",
-                    userRequestRegistration.email(), keycloakUserId);
+                    registrationRequest.email(), keycloakUserId);
             keycloakAdminService.deleteUserById(keycloakUserId);
             if (ex instanceof DataIntegrityViolationException dataIntegrityViolationException) {
                 throw new IllegalArgumentException(
@@ -184,27 +184,27 @@ public class AuthService {
     }
 
     private KeycloakUserCreateRequest buildKeycloakUserCreateRequest(
-            UserRequestRegistration userRequestRegistration
+            UserRegistrationRequest registrationRequest
     ) {
         return new KeycloakUserCreateRequest(
-                userRequestRegistration.email(),
-                userRequestRegistration.email(),
+                registrationRequest.email(),
+                registrationRequest.email(),
                 true,
                 true,
                 List.of(),
                 List.of(new KeycloakCredentialRequest(
                         "password",
-                        userRequestRegistration.password(),
+                        registrationRequest.password(),
                         false
                 ))
         );
     }
 
-    private User buildLocalUser(UserRequestRegistration userRequestRegistration) {
+    private User buildLocalUser(UserRegistrationRequest registrationRequest) {
         return User.builder()
-                .name(userRequestRegistration.name())
-                .email(userRequestRegistration.email())
-                .phone(userRequestRegistration.phone())
+                .name(registrationRequest.name())
+                .email(registrationRequest.email())
+                .phone(registrationRequest.phone())
                 .build();
     }
 

@@ -1,10 +1,9 @@
-package com.solarlab.adboard.service;
+package com.solarlab.adboard.service.impl;
 
 import com.solarlab.adboard.config.YandexDiskProperties;
 import com.solarlab.adboard.model.Image;
 import com.solarlab.adboard.repository.AdvertisementRepository;
 import com.solarlab.adboard.repository.ImageRepository;
-import com.solarlab.adboard.service.impl.YandexDiskImageService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ImageServiceTest {
+class YandexDiskImageServiceTest {
 
     @Mock
     private RestTemplate yandexRestTemplate;

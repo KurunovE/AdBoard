@@ -1,7 +1,6 @@
-package com.solarlab.adboard.controller;
+package com.solarlab.adboard.exception;
 
 import com.solarlab.adboard.dto.response.ExceptionResponse;
-import com.solarlab.adboard.exception.YandexDiskException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.persistence.EntityNotFoundException;
@@ -122,7 +121,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleDataIntegrityViolation(
             DataIntegrityViolationException ex
     ) {
-        ex.getMostSpecificCause();
         String message = ex.getMostSpecificCause().getMessage();
 
         log.warn("Data integrity violation: {}", message);

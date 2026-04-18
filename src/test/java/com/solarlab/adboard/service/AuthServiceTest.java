@@ -4,9 +4,9 @@ import com.solarlab.adboard.config.KeycloakProperties;
 import com.solarlab.adboard.dto.request.auth.LoginRequest;
 import com.solarlab.adboard.dto.request.auth.LogoutRequest;
 import com.solarlab.adboard.dto.request.auth.RefreshTokenRequest;
-import com.solarlab.adboard.dto.request.user.UserRequestRegistration;
+import com.solarlab.adboard.dto.request.user.UserRegistrationRequest;
 import com.solarlab.adboard.dto.response.auth.LoginResponse;
-import com.solarlab.adboard.dto.response.user.UserResponseRegistration;
+import com.solarlab.adboard.dto.response.user.UserRegistrationResponse;
 import com.solarlab.adboard.mapper.UserMapper;
 import com.solarlab.adboard.model.User;
 import com.solarlab.adboard.repository.UserRepository;
@@ -56,28 +56,28 @@ class AuthServiceTest {
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(User.builder().build()));
 
         assertThrows(IllegalArgumentException.class, () ->
-                authService.registerUser(new UserRequestRegistration("User", "user@test.com", "+123", "pass"))
+                authService.registerUser(new UserRegistrationRequest("User", "user@test.com", "+123", "pass"))
         );
     }
 
     @Test
     void registerShouldCreateUserAndReturnResponse() {
-        UserRequestRegistration request = new UserRequestRegistration("User", "user@test.com", "+123", "pass");
+        UserRegistrationRequest request = new UserRegistrationRequest("User", "user@test.com", "+123", "pass");
         User savedUser = User.builder()
                 .id(1L).email("user@test.com")
                 .name("User")
                 .phone("+123")
                 .build();
-        UserResponseRegistration response = UserResponseRegistration.builder()
+        UserRegistrationResponse response = UserRegistrationResponse.builder()
                 .id(1L)
                 .email("user@test.com")
                 .build();
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.empty());
         when(keycloakAdminService.createUser(any())).thenReturn("kc-1");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(userMapper.toUserResponseRegistration(savedUser)).thenReturn(response);
+        when(userMapper.toUserRegistrationResponse(savedUser)).thenReturn(response);
 
-        UserResponseRegistration result = authService.registerUser(request);
+        UserRegistrationResponse result = authService.registerUser(request);
 
         assertEquals(response, result);
         verify(keycloakAdminService).assignClientRoleToUser("kc-1", "USER");
@@ -86,7 +86,7 @@ class AuthServiceTest {
 
     @Test
     void registerShouldRollbackKeycloakWhenLocalSaveFails() {
-        UserRequestRegistration request = new UserRequestRegistration("User", "user@test.com", "+123", "pass");
+        UserRegistrationRequest request = new UserRegistrationRequest("User", "user@test.com", "+123", "pass");
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.empty());
         when(keycloakAdminService.createUser(any())).thenReturn("kc-1");
         when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("db fail"));

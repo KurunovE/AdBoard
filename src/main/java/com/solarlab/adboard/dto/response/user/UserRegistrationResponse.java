@@ -3,7 +3,7 @@ package com.solarlab.adboard.dto.response.user;
 import lombok.Builder;
 
 @Builder
-public record UserResponseRegistration(
+public record UserRegistrationResponse(
         Long id,
         String name,
         String email,
