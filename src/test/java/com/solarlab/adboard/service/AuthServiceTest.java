@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +45,8 @@ class AuthServiceTest {
     private KeycloakProperties keycloakProperties;
     @Mock
     private KeycloakAdminService keycloakAdminService;
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private AuthService authService;
@@ -78,6 +81,7 @@ class AuthServiceTest {
 
         assertEquals(response, result);
         verify(keycloakAdminService).assignClientRoleToUser("kc-1", "USER");
+        verify(applicationEventPublisher).publishEvent(new UserRegisteredEvent(1L, "User", "user@test.com"));
     }
 
     @Test

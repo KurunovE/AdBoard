@@ -13,6 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -54,6 +55,23 @@ class ConfigAndDtoTest {
 
         assertEquals("token", properties.token());
         assertEquals("https://cloud-api.yandex.net/v1/disk/resources", properties.apiUrl());
+    }
+
+    @Test
+    void mailPropertiesShouldExposeConfiguredValues() {
+        MailProperties properties = new MailProperties(
+                "smtp.yandex.ru",
+                587,
+                "mail@yandex.ru",
+                "secret",
+                "mail@yandex.ru",
+                Map.of("mail.smtp.auth", "true", "mail.smtp.starttls.enable", "true")
+        );
+
+        assertEquals("smtp.yandex.ru", properties.host());
+        assertEquals(587, properties.port());
+        assertEquals("mail@yandex.ru", properties.from());
+        assertEquals("true", properties.properties().get("mail.smtp.auth"));
     }
 
 

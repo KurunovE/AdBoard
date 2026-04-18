@@ -17,6 +17,7 @@ import com.solarlab.adboard.model.User;
 import com.solarlab.adboard.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -39,6 +40,7 @@ public class AuthService {
     private final UserMapper userMapper;
     private final KeycloakProperties keycloakProperties;
     private final KeycloakAdminService keycloakAdminService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public UserResponseRegistration registerUser(UserRequestRegistration userRequestRegistration) {
@@ -55,6 +57,11 @@ public class AuthService {
         try {
             keycloakAdminService.assignClientRoleToUser(keycloakUserId, "USER");
             User savedUser = userRepository.save(buildLocalUser(userRequestRegistration));
+            applicationEventPublisher.publishEvent(new UserRegisteredEvent(
+                    savedUser.getId(),
+                    savedUser.getName(),
+                    savedUser.getEmail()
+            ));
             log.info("Registered user email={} localId={}", savedUser.getEmail(), savedUser.getId());
             return userMapper.toUserResponseRegistration(savedUser);
         } catch (RuntimeException ex) {
