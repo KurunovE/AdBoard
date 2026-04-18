@@ -6,6 +6,8 @@ import com.solarlab.adboard.dto.request.auth.LogoutRequest;
 import com.solarlab.adboard.dto.request.auth.RefreshTokenRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakCredentialRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakLoginRequest;
+import com.solarlab.adboard.dto.request.keycloak.KeycloakLogoutRequest;
+import com.solarlab.adboard.dto.request.keycloak.KeycloakRefreshTokenRequest;
 import com.solarlab.adboard.dto.request.keycloak.KeycloakUserCreateRequest;
 import com.solarlab.adboard.dto.request.user.UserRequestRegistration;
 import com.solarlab.adboard.dto.response.auth.LoginResponse;
@@ -22,8 +24,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -115,16 +115,14 @@ public class AuthService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("grant_type", "refresh_token");
-        formData.add("client_id", keycloakProperties.clientId());
-        formData.add("refresh_token", refreshTokenRequest.refreshToken());
+        KeycloakRefreshTokenRequest keycloakRefreshTokenRequest = KeycloakRefreshTokenRequest.builder()
+                .grantType("refresh_token")
+                .clientId(keycloakProperties.clientId())
+                .refreshToken(refreshTokenRequest.refreshToken())
+                .clientSecret(keycloakProperties.clientSecret())
+                .build();
 
-        if (hasText(keycloakProperties.clientSecret())) {
-            formData.add("client_secret", keycloakProperties.clientSecret());
-        }
-
-        HttpEntity<?> request = new HttpEntity<>(formData, headers);
+        HttpEntity<?> request = new HttpEntity<>(keycloakRefreshTokenRequest.toFormData(), headers);
 
         try {
             ResponseEntity<LoginResponse> response = restTemplate.postForEntity(
@@ -154,15 +152,13 @@ public class AuthService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", keycloakProperties.clientId());
-        formData.add("refresh_token", logoutRequest.refreshToken());
+        KeycloakLogoutRequest keycloakLogoutRequest = KeycloakLogoutRequest.builder()
+                .clientId(keycloakProperties.clientId())
+                .refreshToken(logoutRequest.refreshToken())
+                .clientSecret(keycloakProperties.clientSecret())
+                .build();
 
-        if (hasText(keycloakProperties.clientSecret())) {
-            formData.add("client_secret", keycloakProperties.clientSecret());
-        }
-
-        HttpEntity<?> request = new HttpEntity<>(formData, headers);
+        HttpEntity<?> request = new HttpEntity<>(keycloakLogoutRequest.toFormData(), headers);
 
         try {
             restTemplate.postForEntity(

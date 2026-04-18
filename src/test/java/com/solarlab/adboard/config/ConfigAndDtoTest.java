@@ -1,6 +1,8 @@
 package com.solarlab.adboard.config;
 
 import com.solarlab.adboard.dto.request.keycloak.KeycloakLoginRequest;
+import com.solarlab.adboard.dto.request.keycloak.KeycloakLogoutRequest;
+import com.solarlab.adboard.dto.request.keycloak.KeycloakRefreshTokenRequest;
 import com.solarlab.adboard.exception.YandexDiskException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatusCode;
@@ -70,6 +72,38 @@ class ConfigAndDtoTest {
 
         assertEquals("password", formData.getFirst("grant_type"));
         assertEquals("client", formData.getFirst("client_id"));
+        assertEquals("secret", formData.getFirst("client_secret"));
+    }
+
+    @Test
+    void keycloakRefreshTokenRequestShouldBuildFormData() {
+        KeycloakRefreshTokenRequest request = KeycloakRefreshTokenRequest.builder()
+                .grantType("refresh_token")
+                .clientId("client")
+                .refreshToken("refresh-1")
+                .clientSecret("secret")
+                .build();
+
+        var formData = request.toFormData();
+
+        assertEquals("refresh_token", formData.getFirst("grant_type"));
+        assertEquals("client", formData.getFirst("client_id"));
+        assertEquals("refresh-1", formData.getFirst("refresh_token"));
+        assertEquals("secret", formData.getFirst("client_secret"));
+    }
+
+    @Test
+    void keycloakLogoutRequestShouldBuildFormData() {
+        KeycloakLogoutRequest request = KeycloakLogoutRequest.builder()
+                .clientId("client")
+                .refreshToken("refresh-1")
+                .clientSecret("secret")
+                .build();
+
+        var formData = request.toFormData();
+
+        assertEquals("client", formData.getFirst("client_id"));
+        assertEquals("refresh-1", formData.getFirst("refresh_token"));
         assertEquals("secret", formData.getFirst("client_secret"));
     }
 

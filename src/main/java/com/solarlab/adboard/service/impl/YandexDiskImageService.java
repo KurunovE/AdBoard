@@ -34,7 +34,7 @@ public class YandexDiskImageService implements ImageService {
     private final RestTemplate yandexRestTemplate;
     private final ImageRepository imageRepository;
     private final AdvertisementRepository advertisementRepository;
-    private final String apiUrl;
+    private final YandexDiskProperties yandexDiskProperties;
 
     public YandexDiskImageService(
             @Qualifier("yandexRestTemplate") RestTemplate yandexRestTemplate,
@@ -45,7 +45,7 @@ public class YandexDiskImageService implements ImageService {
         this.yandexRestTemplate = yandexRestTemplate;
         this.imageRepository = imageRepository;
         this.advertisementRepository = advertisementRepository;
-        this.apiUrl = yandexDiskProperties.apiUrl();
+        this.yandexDiskProperties = yandexDiskProperties;
     }
 
     @Override
@@ -111,7 +111,7 @@ public class YandexDiskImageService implements ImageService {
     }
 
     private void ensureDirectoryExists(String path) {
-        String url = UriComponentsBuilder.fromUriString(apiUrl)
+        String url = UriComponentsBuilder.fromUriString(yandexDiskProperties.apiUrl())
                 .queryParam("path", path)
                 .toUriString();
         try {
@@ -153,7 +153,7 @@ public class YandexDiskImageService implements ImageService {
     }
 
     private String getUploadUrl(String path) {
-        String url = UriComponentsBuilder.fromUriString(apiUrl + "/upload")
+        String url = UriComponentsBuilder.fromUriString(yandexDiskProperties.apiUrl() + "/upload")
                 .queryParam("path", path)
                 .toUriString();
 
@@ -168,7 +168,7 @@ public class YandexDiskImageService implements ImageService {
     }
 
     private void publishFile(String path) {
-        String url = UriComponentsBuilder.fromUriString(apiUrl + "/publish")
+        String url = UriComponentsBuilder.fromUriString(yandexDiskProperties.apiUrl() + "/publish")
                 .queryParam("path", path)
                 .toUriString();
 
@@ -176,7 +176,7 @@ public class YandexDiskImageService implements ImageService {
     }
 
     private String getPublicUrl(String path) {
-        String url = UriComponentsBuilder.fromUriString(apiUrl)
+        String url = UriComponentsBuilder.fromUriString(yandexDiskProperties.apiUrl())
                 .queryParam("path", path)
                 .queryParam("fields", "public_url")
                 .toUriString();
@@ -187,10 +187,9 @@ public class YandexDiskImageService implements ImageService {
     }
 
     private void deleteFromYandex(String path) {
-        String url = UriComponentsBuilder.fromUriString(apiUrl)
+        String url = UriComponentsBuilder.fromUriString(yandexDiskProperties.apiUrl())
                 .queryParam("path", path)
                 .toUriString();
-
         yandexRestTemplate.delete(url);
     }
 
