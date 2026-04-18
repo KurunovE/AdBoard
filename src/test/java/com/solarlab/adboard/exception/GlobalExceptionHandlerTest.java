@@ -46,9 +46,7 @@ class GlobalExceptionHandlerTest {
 
         BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(),
                 "target");
-        bindingResult.addError(new FieldError(
-                "target", "email", "must be valid")
-        );
+        bindingResult.addError(new FieldError("target", "email", "must be valid"));
         Method method = SampleMethods.class.getDeclaredMethod("sample", String.class);
         MethodArgumentNotValidException invalidException = new MethodArgumentNotValidException(
                 new MethodParameter(method, 0), bindingResult
