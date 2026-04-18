@@ -1,9 +1,10 @@
 package com.solarlab.adboard.service;
 
+import com.solarlab.adboard.config.YandexDiskProperties;
 import com.solarlab.adboard.model.Image;
 import com.solarlab.adboard.repository.AdvertisementRepository;
 import com.solarlab.adboard.repository.ImageRepository;
-import com.solarlab.adboard.service.impl.YandexDriveImageService;
+import com.solarlab.adboard.service.impl.YandexDiskImageService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,12 +54,15 @@ class ImageServiceTest {
         assertEquals(List.of(), createService().getAdvertisementImages(1L));
     }
 
-    private YandexDriveImageService createService() {
-        return new YandexDriveImageService(
+    private YandexDiskImageService createService() {
+        return new YandexDiskImageService(
                 yandexRestTemplate,
                 imageRepository,
                 advertisementRepository,
-                "https://cloud-api.yandex.net/v1/disk/resources"
+                new YandexDiskProperties(
+                        "token",
+                        "https://cloud-api.yandex.net/v1/disk/resources"
+                )
         );
     }
 }

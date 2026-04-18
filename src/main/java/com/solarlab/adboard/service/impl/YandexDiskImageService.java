@@ -1,5 +1,6 @@
 package com.solarlab.adboard.service.impl;
 
+import com.solarlab.adboard.config.YandexDiskProperties;
 import com.solarlab.adboard.dto.response.yandex.YandexPublicUrlResponse;
 import com.solarlab.adboard.dto.response.yandex.YandexUploadResponse;
 import com.solarlab.adboard.exception.YandexDiskException;
@@ -10,9 +11,7 @@ import com.solarlab.adboard.repository.ImageRepository;
 import com.solarlab.adboard.service.ImageService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -30,24 +29,23 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class YandexDriveImageService implements ImageService {
+public class YandexDiskImageService implements ImageService {
 
     private final RestTemplate yandexRestTemplate;
     private final ImageRepository imageRepository;
     private final AdvertisementRepository advertisementRepository;
     private final String apiUrl;
 
-    @Autowired
-    public YandexDriveImageService(
+    public YandexDiskImageService(
             @Qualifier("yandexRestTemplate") RestTemplate yandexRestTemplate,
             ImageRepository imageRepository,
             AdvertisementRepository advertisementRepository,
-            @Value("${yandex.disk.api-url}") String apiUrl
+            YandexDiskProperties yandexDiskProperties
     ) {
         this.yandexRestTemplate = yandexRestTemplate;
         this.imageRepository = imageRepository;
         this.advertisementRepository = advertisementRepository;
-        this.apiUrl = apiUrl;
+        this.apiUrl = yandexDiskProperties.apiUrl();
     }
 
     @Override
@@ -58,7 +56,6 @@ public class YandexDriveImageService implements ImageService {
                     "Advertisement with id " + advertisementId + " not found"
             );
         }
-
         return imageRepository.findAllByAdvertisementIdOrderBySortOrderAsc(advertisementId);
     }
 

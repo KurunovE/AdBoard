@@ -11,7 +11,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -45,6 +44,18 @@ class ConfigAndDtoTest {
     }
 
     @Test
+    void yandexDiskPropertiesShouldExposeConfiguredValues() {
+        YandexDiskProperties properties = new YandexDiskProperties(
+                "token",
+                "https://cloud-api.yandex.net/v1/disk/resources"
+        );
+
+        assertEquals("token", properties.token());
+        assertEquals("https://cloud-api.yandex.net/v1/disk/resources", properties.apiUrl());
+    }
+
+
+    @Test
     void keycloakLoginRequestShouldBuildFormData() {
         KeycloakLoginRequest request = KeycloakLoginRequest.builder()
                 .grantType("password")
@@ -64,8 +75,10 @@ class ConfigAndDtoTest {
 
     @Test
     void restTemplateConfigShouldCreateTemplatesAndAttachYandexInterceptor() throws Exception {
-        RestTemplateConfig config = new RestTemplateConfig();
-        ReflectionTestUtils.setField(config, "yandexToken", "token");
+        RestTemplateConfig config = new RestTemplateConfig(new YandexDiskProperties(
+                "token",
+                "https://cloud-api.yandex.net/v1/disk/resources"
+        ));
 
         RestTemplate defaultTemplate = config.restTemplate();
         RestTemplate yandexTemplate = config.yandexRestTemplate();

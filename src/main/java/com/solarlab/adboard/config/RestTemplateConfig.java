@@ -1,6 +1,6 @@
 package com.solarlab.adboard.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -11,10 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
+@RequiredArgsConstructor
 public class RestTemplateConfig {
 
-    @Value("${yandex.disk.token}")
-    private String yandexToken;
+    private final YandexDiskProperties yandexDiskProperties;
 
     @Bean
     @Primary
@@ -27,7 +27,10 @@ public class RestTemplateConfig {
         RestTemplate restTemplate = new RestTemplate();
         List<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
         interceptors.add((request, body, execution) -> {
-            request.getHeaders().add("Authorization", "OAuth " + yandexToken);
+            request.getHeaders().add(
+                    "Authorization",
+                    "OAuth " + yandexDiskProperties.token()
+            );
             return execution.execute(request, body);
         });
         restTemplate.setInterceptors(interceptors);

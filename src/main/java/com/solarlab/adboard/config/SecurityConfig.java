@@ -15,7 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties(KeycloakProperties.class)
+@EnableConfigurationProperties({KeycloakProperties.class, YandexDiskProperties.class})
 @RequiredArgsConstructor
 public class SecurityConfig {
 
