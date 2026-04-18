@@ -324,3 +324,10 @@ Content-Type: application/json
 - `V4__create_triggers.sql`
 
 Hibernate работает в режиме `ddl-auto=validate`, поэтому схема должна соответствовать SQL-миграциям.
+## Test Coverage
+
+Проект использует `JaCoCo` для проверки покрытия тестами.
+
+- Минимальное покрытие для сборки: `60%` line coverage
+- Генерация отчета: `.\gradlew.bat jacocoTestReport`
+- Проверка порога покрытия: `.\gradlew.bat check`
