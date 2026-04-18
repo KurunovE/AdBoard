@@ -3,26 +3,29 @@
 Backend-сервис доски объявлений на `Spring Boot`.
 
 Проект предоставляет REST API для:
-- регистрации и логина через `Keycloak`
+- регистрации, логина, refresh/logout через `Keycloak`
 - управления объявлениями, категориями, комментариями и пользователями
 - загрузки изображений объявлений в `Yandex Disk`
+- отправки welcome-email после успешной регистрации
 
 ## Возможности
 
-- регистрация пользователя с созданием аккаунта в `Keycloak`
-- логин через `Keycloak` с получением JWT access token
-- CRUD-операции для объявлений
-- фильтрация объявлений по категории, автору и диапазону цены
-- хранение статуса объявления: `ACTIVE` / `CLOSED`
-- CRUD-операции для категорий
-- просмотр и создание комментариев к объявлениям
-- загрузка, просмотр списка и удаление изображений объявления
+- регистрация пользователя с созданием аккаунта в `Keycloak` и локальной записи в БД
+- логин и обновление токенов через `Keycloak`
+- JWT-защита API через `OAuth2 Resource Server`
+- CRUD для объявлений
+- фильтрация объявлений по `categoryId`, `authorId`, `minPrice`, `maxPrice`
+- смена статуса объявления: `ACTIVE` / `CLOSED`
+- CRUD для категорий с поддержкой родительской категории
+- просмотр, создание и удаление комментариев
+- загрузка, просмотр и удаление изображений объявления
 - owner-based доступ через `@PreAuthorize` и `SecurityUtils`
 - единый JSON-формат ошибок через `GlobalExceptionHandler`
 - Swagger / OpenAPI документация
-- кэширование категорий и объявления по `id`
+- кеширование категорий и объявлений по `id`
+- Flyway-миграции для схемы БД
 
-## Технологии
+## Стек
 
 - `Java 21`
 - `Spring Boot 4.0.3`
@@ -32,6 +35,8 @@ Backend-сервис доски объявлений на `Spring Boot`.
 - `Spring Data JPA`
 - `Spring Validation`
 - `Spring Cache`
+- `Spring Mail`
+- `Thymeleaf`
 - `PostgreSQL`
 - `Flyway`
 - `MapStruct`
@@ -49,27 +54,13 @@ Backend-сервис доски объявлений на `Spring Boot`.
 - `src/main/java/com/solarlab/adboard/model` - JPA-сущности
 - `src/main/java/com/solarlab/adboard/dto` - DTO запросов и ответов
 - `src/main/java/com/solarlab/adboard/mapper` - MapStruct-мапперы
-- `src/main/java/com/solarlab/adboard/config` - security, converters, properties, rest clients
+- `src/main/java/com/solarlab/adboard/config` - security, properties, rest clients
 - `src/main/resources/db/migration` - SQL-миграции Flyway
+- `src/main/resources/templates/mail` - HTML-шаблоны email
 - `src/test/java/com/solarlab/adboard` - unit и controller tests
+- `src/test/resources/contracts/api-contract.yaml` - тестовый OpenAPI-контракт
 
-## Архитектура и поведение
-
-### Аутентификация
-
-- `POST /v1/auth/register` создаёт пользователя в `Keycloak`, назначает роль `USER` и сохраняет локальную запись в БД
-- `POST /v1/auth/login` получает из `Keycloak` пару `access_token` + `refresh_token`
-- `POST /v1/auth/refresh` обновляет пару токенов по `refresh_token`
-- `POST /v1/auth/logout` завершает сессию в `Keycloak` и инвалидирует `refresh_token`
-- API работает как `OAuth2 Resource Server` и валидирует JWT токены
-
-Клиентский flow:
-- после `login` клиент сохраняет `access_token` и `refresh_token`
-- при истечении `access_token` клиент вызывает `POST /v1/auth/refresh`
-- после успешного refresh клиент заменяет оба токена
-- при выходе клиент вызывает `POST /v1/auth/logout` и удаляет локально сохранённые токены
-
-### Авторизация
+## Безопасность и доступ
 
 Без токена доступны:
 - `POST /v1/auth/**`
@@ -79,66 +70,32 @@ Backend-сервис доски объявлений на `Spring Boot`.
 - `/swagger-ui/**`
 - `/v3/api-docs/**`
 
-Все остальные запросы требуют JWT.
+Остальные запросы требуют JWT.
 
-Текущий пользователь извлекается централизованно:
-- `CurrentUserProvider` читает `email` или `preferred_username` из JWT
-- `CurrentUserProvider` определяет наличие `ROLE_ADMIN` и возвращает `CurrentUserContext`
-- `SecurityUtils`, `AdvertisementService` и `CommentService` используют этот общий источник вместо прямой работы с `SecurityContextHolder`
-
-Дополнительно используется проверка владельца ресурса:
-- `SecurityUtils` использует `CurrentUserProvider` для owner-based проверок в `@PreAuthorize`
-- пользователь может читать и обновлять свой профиль
-- владелец объявления может обновлять, закрывать и удалять своё объявление
-- владелец объявления может загружать изображения к своему объявлению
-- владелец комментария может удалить свой комментарий
+Правила доступа:
+- пользователь может создавать объявления и комментарии с ролью `USER`
+- владелец объявления или администратор может обновлять, закрывать и удалять объявление
+- владелец комментария или администратор может удалить комментарий
 - владелец изображения или администратор может удалить изображение
-- администратор может создавать и удалять категории, а также удалять пользователей
+- пользователь может читать и обновлять свой профиль; администратор может удалять пользователей
+- категории создаёт, обновляет и удаляет только администратор
 
-### Объявления
+## Поведение сервиса
 
-- при создании объявления статус автоматически устанавливается в `ACTIVE`
-- поддерживаются фильтры:
-  - `categoryId`
-  - `authorId`
-  - `minPrice`
-  - `maxPrice`
+- при создании объявления статус автоматически ставится в `ACTIVE`
 - если `minPrice > maxPrice`, API возвращает `400 Bad Request`
-- при удалении объявления сначала удаляются связанные изображения из `Yandex Disk`, затем запись объявления из БД
-
-### Изображения
-
-- изображения не хранятся локально
-- файлы загружаются в `Yandex Disk`
-- API возвращает список всех изображений объявления, отсортированный по `sortOrder`
-
-### Ошибки
-
-Сервис возвращает ошибки в едином формате:
-
-```json
-{
-  "message": "Advertisement with id 1 not found",
-  "status": 404,
-  "timestamp": "2026-04-13T21:00:00"
-}
-```
+- при удалении объявления сервис сначала удаляет связанные изображения из `Yandex Disk`, затем запись из БД
+- изображения не хранятся локально: файл публикуется в `Yandex Disk`, а в БД сохраняются `url`, `path`, `sortOrder`
+- после успешной регистрации публикуется `UserRegisteredEvent`, и после commit отправляется welcome-email
 
 ## Конфигурация
 
-Основной конфиг:
-- [application.yaml](src/main/resources/application.yaml)
+Основной конфиг находится в [application.yaml](/C:/Users/eegor/Desktop/project/AdBoard/src/main/resources/application.yaml).
 
-Локальный профиль:
-- [application-local.yaml](src/main/resources/application-local.yaml)
-
-По умолчанию активен профиль:
+По умолчанию приложение запускается с профилем:
 - `local`
 
-Сервис слушает порт:
-- `8081`
-
-Рекомендуется передавать секреты через переменные окружения или `.env`, а не хранить их в локальных yaml-файлах.
+Отдельного `application-local.yaml` сейчас в репозитории нет, поэтому локальные значения ожидаются через переменные окружения или `.env`.
 
 Минимальный набор переменных окружения:
 
@@ -151,14 +108,13 @@ POSTGRES_DB=adboard_db
 POSTGRES_USER=user
 POSTGRES_PASSWORD=password
 
+KEYCLOAK_HOST=localhost
 KEYCLOAK_PORT=9090
-KEYCLOAK_ISSUER_URI=http://localhost:9090/realms/adboard
-KEYCLOAK_JWK_SET_URI=http://localhost:9090/realms/adboard/protocol/openid-connect/certs
-
-KEYCLOAK_AUTH_SERVER_URL=http://localhost:9090
 KEYCLOAK_REALM=adboard
 KEYCLOAK_CLIENT_ID=adboard-client
 KEYCLOAK_CLIENT_SECRET=your-client-secret
+KEYCLOAK_ISSUER_URI=http://localhost:9090/realms/adboard
+KEYCLOAK_JWK_SET_URI=http://localhost:9090/realms/adboard/protocol/openid-connect/certs
 KEYCLOAK_ADMIN_USERNAME=admin_username
 KEYCLOAK_ADMIN_PASSWORD=admin_password
 KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
@@ -167,13 +123,20 @@ KEYCLOAK_ADMIN=admin
 KEYCLOAK_ADMIN_PASSWORD=admin_password
 
 YANDEX_DISK_TOKEN=your-yandex-disk-token
+
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=no-reply@example.com
+MAIL_PASSWORD=mail-password
 ```
+
+Не коммитьте реальные секреты. Для локальной разработки удобнее использовать `.env`.
 
 ## Локальный запуск
 
 ### 1. Поднять инфраструктуру
 
-В проекте есть `docker-compose.yaml` для локального запуска `PostgreSQL` и `Keycloak`.
+В репозитории есть `docker-compose.yaml` для локального запуска `PostgreSQL` и `Keycloak`:
 
 ```bash
 docker compose up -d
@@ -185,22 +148,35 @@ docker compose up -d
 
 ### 2. Запустить приложение
 
-Linux / macOS:
-
-```bash
-./gradlew bootRun
-```
-
 Windows:
 
 ```powershell
 .\gradlew.bat bootRun
 ```
 
-Приложение будет доступно по адресу:
-- `http://localhost:8081`
+macOS / Linux:
 
-## Swagger / OpenAPI
+```bash
+./gradlew bootRun
+```
+
+Сервис будет доступен по адресу `http://localhost:8081`.
+
+## Сборка и тесты
+
+Запуск тестов:
+
+```powershell
+.\gradlew.bat test
+```
+
+Сборка проекта:
+
+```powershell
+.\gradlew.bat build
+```
+
+## Swagger и контракт API
 
 Swagger UI:
 - `http://localhost:8081/swagger-ui.html`
@@ -209,14 +185,17 @@ Swagger UI:
 OpenAPI JSON:
 - `http://localhost:8081/v3/api-docs`
 
+Тестовый контракт API:
+- [api-contract.yaml](/C:/Users/eegor/Desktop/project/AdBoard/src/test/resources/contracts/api-contract.yaml)
+
 ## Основные endpoints
 
 ### Auth
 
+- `POST /v1/auth/register`
 - `POST /v1/auth/login`
 - `POST /v1/auth/refresh`
 - `POST /v1/auth/logout`
-- `POST /v1/auth/register`
 
 ### Advertisements
 
@@ -238,6 +217,7 @@ OpenAPI JSON:
 - `GET /v1/categories`
 - `GET /v1/categories/{id}`
 - `POST /v1/categories/create`
+- `PUT /v1/categories/{id}`
 - `DELETE /v1/categories/{id}`
 
 ### Comments
@@ -298,43 +278,6 @@ Content-Type: application/json
 }
 ```
 
-### Обновление токена
-
-```http
-POST /v1/auth/refresh
-Content-Type: application/json
-
-{
-  "refreshToken": "<refresh_token>"
-}
-```
-
-Пример успешного ответа:
-
-```json
-{
-  "access_token": "<new_access_token>",
-  "refresh_token": "<new_refresh_token>",
-  "expires_in": 300,
-  "refresh_expires_in": 1800,
-  "token_type": "Bearer"
-}
-```
-
-### Выход
-
-```http
-POST /v1/auth/logout
-Content-Type: application/json
-
-{
-  "refreshToken": "<refresh_token>"
-}
-```
-
-Успешный ответ:
-- `204 No Content`
-
 ### Создание объявления
 
 ```http
@@ -362,41 +305,22 @@ Content-Type: application/json
 }
 ```
 
-### Получение изображений объявления
+### Ошибка API
 
-```http
-GET /v1/advertisements/1/images
+```json
+{
+  "message": "Advertisement with id 1 not found",
+  "status": 404,
+  "timestamp": "2026-04-13T21:00:00"
+}
 ```
 
 ## База данных
 
-Для миграций используется `Flyway`.
+Для схемы БД используются Flyway-миграции:
+- `V1__create_enum_types.sql`
+- `V2__create_tables.sql`
+- `V3__create_indexes.sql`
+- `V4__create_triggers.sql`
 
-Миграции расположены в:
-- `src/main/resources/db/migration`
-
-Hibernate работает в режиме:
-- `spring.jpa.hibernate.ddl-auto=validate`
-
-Это значит, что схема не генерируется автоматически и должна соответствовать SQL-миграциям.
-
-## Кэширование
-
-Включено кэширование для:
-- списка категорий
-- категории по `id`
-- объявления по `id`
-
-## Тесты
-
-Запуск всех тестов:
-
-```bash
-./gradlew test
-```
-
-Для Windows:
-
-```powershell
-.\gradlew.bat test
-```
+Hibernate работает в режиме `ddl-auto=validate`, поэтому схема должна соответствовать SQL-миграциям.
