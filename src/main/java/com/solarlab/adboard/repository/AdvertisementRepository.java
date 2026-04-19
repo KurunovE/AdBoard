@@ -14,7 +14,7 @@ import java.util.Optional;
 @Repository
 public interface AdvertisementRepository extends JpaRepository<Advertisement, Long> {
 
-    @EntityGraph(attributePaths = {"category", "author", "images"})
+    @EntityGraph(attributePaths = {"category", "author"})
     @Query("SELECT a FROM Advertisement a " +
            "WHERE (:categoryId IS NULL OR a.category.id = :categoryId) " +
            "AND (:authorId IS NULL OR a.author.id = :authorId) " +
@@ -27,7 +27,7 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
             @Param("maxPrice") BigDecimal maxPrice
     );
 
-    @EntityGraph(attributePaths = {"category", "author", "images"})
+    @EntityGraph(attributePaths = {"category", "author"})
     @Override
     Optional<Advertisement> findById(Long id);
 }

@@ -72,7 +72,6 @@ class AdvertisementServiceTest {
                 .status(AdvertisementStatus.ACTIVE)
                 .author(user)
                 .category(category)
-                .images(List.of())
                 .comments(List.of())
                 .build();
         response = AdvertisementResponse.builder().id(1L).title("Laptop").build();

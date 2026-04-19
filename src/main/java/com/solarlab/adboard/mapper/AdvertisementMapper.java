@@ -5,7 +5,7 @@ import com.solarlab.adboard.model.Advertisement;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = {UserMapper.class, ImageMapper.class})
+@Mapper(componentModel = "spring", uses = UserMapper.class)
 public interface AdvertisementMapper {
 
     @Mapping(target = "categoryId", source = "category.id")
