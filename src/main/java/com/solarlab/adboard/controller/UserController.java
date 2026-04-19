@@ -1,5 +1,6 @@
 package com.solarlab.adboard.controller;
 
+import com.solarlab.adboard.config.SecurityUtils;
 import com.solarlab.adboard.dto.request.user.UpdateUserRequest;
 import com.solarlab.adboard.dto.response.ExceptionResponse;
 import com.solarlab.adboard.dto.response.user.UserResponse;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final SecurityUtils securityUtils;
 
     @Operation(summary = "Get user by id")
     @ApiResponses({
@@ -39,11 +41,11 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
-    @PreAuthorize("@securityUtils.isOwner(#id)")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUser(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {
+        securityUtils.ensureOwner(id);
         return ResponseEntity.ok(userService.findUserById(id));
     }
 
@@ -59,12 +61,12 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
-    @PreAuthorize("@securityUtils.isOwner(#id)")
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(
             @PositiveOrZero @PathVariable(name = "id") Long id,
             @Valid @RequestBody UpdateUserRequest updateUserRequest
     ) {
+        securityUtils.ensureOwner(id);
         return ResponseEntity.ok(userService.updateUser(id, updateUserRequest));
     }
 

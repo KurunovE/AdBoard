@@ -1,5 +1,6 @@
 package com.solarlab.adboard.controller;
 
+import com.solarlab.adboard.config.SecurityUtils;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementCreateRequest;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementFilter;
 import com.solarlab.adboard.dto.request.advertisement.AdvertisementStatusUpdateRequest;
@@ -17,7 +18,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +32,7 @@ import java.util.List;
 public class AdvertisementController {
 
     private final AdvertisementService advertisementService;
+    private final SecurityUtils securityUtils;
 
     @Operation(summary = "Get advertisements")
     @ApiResponses({
@@ -74,7 +75,7 @@ public class AdvertisementController {
             @ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<AdvertisementResponse> createAdvertisement(
             @Valid @RequestBody AdvertisementCreateRequest request
     ) {
@@ -93,12 +94,12 @@ public class AdvertisementController {
             @ApiResponse(responseCode = "404", description = "Advertisement or category not found",
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
-    @PreAuthorize("@securityUtils.isAdvertisementOwner(#id)")
     @PutMapping("/{id}")
     public ResponseEntity<AdvertisementResponse> updateAdvertisement(
             @PositiveOrZero @PathVariable(name = "id") Long id,
             @Valid @RequestBody AdvertisementUpdateRequest request
     ) {
+        securityUtils.ensureAdvertisementOwner(id);
         return ResponseEntity.ok(advertisementService.update(id, request));
     }
 
@@ -114,12 +115,12 @@ public class AdvertisementController {
             @ApiResponse(responseCode = "404", description = "Advertisement not found",
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
-    @PreAuthorize("@securityUtils.isAdvertisementOwner(#id)")
     @PatchMapping("/{id}/status")
     public ResponseEntity<AdvertisementResponse> changeAdvertisementStatus(
             @PositiveOrZero @PathVariable(name = "id") Long id,
             @Valid @RequestBody AdvertisementStatusUpdateRequest request
     ) {
+        securityUtils.ensureAdvertisementOwner(id);
         return ResponseEntity.ok(advertisementService.changeStatus(id, request));
     }
 
@@ -135,11 +136,11 @@ public class AdvertisementController {
             @ApiResponse(responseCode = "404", description = "Advertisement not found",
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
-    @PreAuthorize("@securityUtils.isAdvertisementOwner(#id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAdvertisement(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {
+        securityUtils.ensureAdvertisementOwner(id);
         advertisementService.delete(id);
         return ResponseEntity.noContent().build();
     }

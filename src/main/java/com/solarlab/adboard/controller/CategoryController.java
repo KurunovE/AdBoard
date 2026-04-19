@@ -65,7 +65,7 @@ public class CategoryController {
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(
             @Valid @RequestBody CategoryRequest categoryRequest
     ) {

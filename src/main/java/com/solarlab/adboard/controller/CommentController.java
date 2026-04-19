@@ -1,5 +1,6 @@
 package com.solarlab.adboard.controller;
 
+import com.solarlab.adboard.config.SecurityUtils;
 import com.solarlab.adboard.dto.request.comment.CommentRequest;
 import com.solarlab.adboard.dto.response.ExceptionResponse;
 import com.solarlab.adboard.dto.response.comment.CommentResponse;
@@ -28,6 +29,7 @@ import java.util.List;
 public class CommentController {
 
     private final CommentService commentService;
+    private final SecurityUtils securityUtils;
 
     @Operation(summary = "Get comments for advertisement")
     @ApiResponses({
@@ -56,7 +58,7 @@ public class CommentController {
             @ApiResponse(responseCode = "404", description = "Advertisement not found",
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
-    @PostMapping("/create")
+    @PostMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CommentResponse> createComment(
             @PositiveOrZero @PathVariable(name = "advertisementId") Long advertisementId,
@@ -77,11 +79,11 @@ public class CommentController {
             @ApiResponse(responseCode = "404", description = "Comment not found",
                     content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
     })
-    @PreAuthorize("@securityUtils.isCommentOwner(#id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteComment(
             @PositiveOrZero @PathVariable(name = "id") Long id
     ) {
+        securityUtils.ensureCommentOwner(id);
         commentService.deleteComment(id);
         return ResponseEntity.noContent().build();
     }
