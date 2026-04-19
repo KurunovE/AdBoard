@@ -1,5 +1,6 @@
 package com.solarlab.adboard.controller;
 
+import com.solarlab.adboard.config.SecurityUtils;
 import com.solarlab.adboard.dto.request.comment.CommentRequest;
 import com.solarlab.adboard.dto.response.comment.CommentResponse;
 import com.solarlab.adboard.service.CommentService;
@@ -20,6 +21,8 @@ class CommentControllerTest {
 
     @Mock
     private CommentService commentService;
+    @Mock
+    private SecurityUtils securityUtils;
 
     @InjectMocks
     private CommentController commentController;
@@ -30,7 +33,6 @@ class CommentControllerTest {
         when(commentService.findAllCommentsByAdId(1L)).thenReturn(List.of(response));
         when(commentService.createComment(1L, new CommentRequest("Hi")))
                 .thenReturn(response);
-
         assertEquals(1, commentController.getAllComments(1L).getBody().size());
         assertEquals(response, commentController.createComment(1L, new CommentRequest("Hi")).getBody());
         assertEquals(HttpStatus.NO_CONTENT, commentController.deleteComment(1L).getStatusCode());

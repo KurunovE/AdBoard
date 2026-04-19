@@ -1119,6 +1119,7 @@ components:
 
     AdvertisementResponse:
       type: object
+      description: Advertisement payload without embedded images. Use /v1/advertisements/{advertisementId}/images to fetch images separately.
       properties:
         id:
           type: integer
@@ -1140,10 +1141,6 @@ components:
           type: string
         author:
           $ref: '#/components/schemas/UserAdvertisementResponse'
-        images:
-          type: array
-          items:
-            $ref: '#/components/schemas/ImageResponse'
         createdAt:
           type: string
           format: date-time

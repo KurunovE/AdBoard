@@ -131,12 +131,6 @@ class MapperTest {
                 .phone("+777")
                 .build();
         Category category = Category.builder().id(9L).name("Tech").build();
-        Image image = Image.builder()
-                .id(4L)
-                .url("http://cdn/image")
-                .sortOrder(0)
-                .uploadedAt(LocalDateTime.of(2026, 4, 18, 12, 30))
-                .build();
         Advertisement advertisement = Advertisement.builder()
                 .id(8L)
                 .title("Laptop")
@@ -145,7 +139,6 @@ class MapperTest {
                 .status(AdvertisementStatus.ACTIVE)
                 .author(author)
                 .category(category)
-                .images(List.of(image))
                 .createdAt(LocalDateTime.of(2026, 4, 18, 12, 0))
                 .updatedAt(LocalDateTime.of(2026, 4, 18, 13, 0))
                 .build();
@@ -157,7 +150,6 @@ class MapperTest {
         assertEquals("Tech", response.categoryName());
         assertNotNull(response.author());
         assertEquals("Seller", response.author().name());
-        assertEquals(1, response.images().size());
     }
 
     private CommentMapper createCommentMapper() {
@@ -169,7 +161,6 @@ class MapperTest {
     private AdvertisementMapper createAdvertisementMapper() {
         AdvertisementMapperImpl mapper = new AdvertisementMapperImpl();
         ReflectionTestUtils.setField(mapper, "userMapper", userMapper);
-        ReflectionTestUtils.setField(mapper, "imageMapper", imageMapper);
         return mapper;
     }
 }

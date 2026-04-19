@@ -1,5 +1,6 @@
 package com.solarlab.adboard.controller;
 
+import com.solarlab.adboard.config.SecurityUtils;
 import com.solarlab.adboard.dto.request.user.UpdateUserRequest;
 import com.solarlab.adboard.dto.response.user.UserResponse;
 import com.solarlab.adboard.service.UserService;
@@ -18,6 +19,8 @@ class UserControllerTest {
 
     @Mock
     private UserService userService;
+    @Mock
+    private SecurityUtils securityUtils;
 
     @InjectMocks
     private UserController userController;
@@ -28,7 +31,6 @@ class UserControllerTest {
         when(userService.findUserById(1L)).thenReturn(response);
         when(userService.updateUser(1L, new UpdateUserRequest("User", "+123")))
                 .thenReturn(response);
-
         assertEquals(response, userController.getUser(1L).getBody());
         assertEquals(response, userController.updateUser(
                 1L, new UpdateUserRequest("User", "+123")).getBody()

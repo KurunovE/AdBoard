@@ -1,5 +1,6 @@
 package com.solarlab.adboard.controller;
 
+import com.solarlab.adboard.config.SecurityUtils;
 import com.solarlab.adboard.dto.response.image.ImageResponse;
 import com.solarlab.adboard.mapper.ImageMapper;
 import com.solarlab.adboard.model.Image;
@@ -25,6 +26,8 @@ class ImageControllerTest {
     private ImageService imageService;
     @Mock
     private ImageMapper imageMapper;
+    @Mock
+    private SecurityUtils securityUtils;
 
     @InjectMocks
     private ImageController imageController;
