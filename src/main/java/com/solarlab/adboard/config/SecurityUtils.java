@@ -6,6 +6,7 @@ import com.solarlab.adboard.repository.CommentRepository;
 import com.solarlab.adboard.repository.ImageRepository;
 import com.solarlab.adboard.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -55,9 +56,31 @@ public class SecurityUtils {
                 .orElse(false));
     }
 
+    public void ensureOwner(Long userId) {
+        ensureAuthorized(isOwner(userId));
+    }
+
+    public void ensureAdvertisementOwner(Long advertisementId) {
+        ensureAuthorized(isAdvertisementOwner(advertisementId));
+    }
+
+    public void ensureCommentOwner(Long commentId) {
+        ensureAuthorized(isCommentOwner(commentId));
+    }
+
+    public void ensureImageOwner(Long imageId) {
+        ensureAuthorized(isImageOwner(imageId));
+    }
+
     private boolean checkOwnership(Function<CurrentUserContext, Boolean> rule) {
         return currentUserProvider.getCurrentUser()
                 .map(current -> current.admin() || rule.apply(current))
                 .orElse(false);
+    }
+
+    private void ensureAuthorized(boolean allowed) {
+        if (!allowed) {
+            throw new AccessDeniedException("Access denied");
+        }
     }
 }
