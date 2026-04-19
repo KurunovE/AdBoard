@@ -2,16 +2,16 @@
 
 Backend-сервис доски объявлений на `Spring Boot`.
 
-Проект предоставляет REST API для:
-- регистрации, логина, refresh/logout через `Keycloak`
+Сервис предоставляет REST API для:
+- регистрации, логина, refresh и logout через `Keycloak`
 - управления объявлениями, категориями, комментариями и пользователями
 - загрузки изображений объявлений в `Yandex Disk`
-- отправки welcome-email после успешной регистрации
+- отправки welcome email после успешной регистрации
 
 ## Возможности
 
 - регистрация пользователя с созданием аккаунта в `Keycloak` и локальной записи в БД
-- логин и обновление токенов через `Keycloak`
+- логин, refresh и logout через `Keycloak`
 - JWT-защита API через `OAuth2 Resource Server`
 - CRUD для объявлений
 - фильтрация объявлений по `categoryId`, `authorId`, `minPrice`, `maxPrice`
@@ -19,11 +19,12 @@ Backend-сервис доски объявлений на `Spring Boot`.
 - CRUD для категорий с поддержкой родительской категории
 - просмотр, создание и удаление комментариев
 - загрузка, просмотр и удаление изображений объявления
-- owner-based доступ через `@PreAuthorize` и `SecurityUtils`
+- проверки доступа на уровне владельца ресурса и администратора
 - единый JSON-формат ошибок через `GlobalExceptionHandler`
 - Swagger / OpenAPI документация
-- кеширование категорий и объявлений по `id`
+- кэширование категорий и объявлений по `id`
 - Flyway-миграции для схемы БД
+- проверка покрытия тестов через `JaCoCo` с минимальным порогом `60%`
 
 ## Стек
 
@@ -45,6 +46,8 @@ Backend-сервис доски объявлений на `Spring Boot`.
 - `Yandex Disk API`
 - `springdoc-openapi`
 - `Gradle Kotlin DSL`
+- `JUnit 5`
+- `Mockito`
 
 ## Структура проекта
 
@@ -54,15 +57,15 @@ Backend-сервис доски объявлений на `Spring Boot`.
 - `src/main/java/com/solarlab/adboard/model` - JPA-сущности
 - `src/main/java/com/solarlab/adboard/dto` - DTO запросов и ответов
 - `src/main/java/com/solarlab/adboard/mapper` - MapStruct-мапперы
-- `src/main/java/com/solarlab/adboard/config` - security, properties, rest clients
+- `src/main/java/com/solarlab/adboard/config` - security, properties и конфигурация
+- `src/main/java/com/solarlab/adboard/exception` - обработка ошибок
 - `src/main/resources/db/migration` - SQL-миграции Flyway
 - `src/main/resources/templates/mail` - HTML-шаблоны email
 - `src/test/java/com/solarlab/adboard` - unit и controller tests
-- `src/test/resources/contracts/api-contract.yaml` - тестовый OpenAPI-контракт
 
 ## Безопасность и доступ
 
-Без токена доступны:
+Без JWT доступны:
 - `POST /v1/auth/**`
 - `GET /v1/advertisements/**`
 - `GET /v1/categories/**`
@@ -72,25 +75,26 @@ Backend-сервис доски объявлений на `Spring Boot`.
 
 Остальные запросы требуют JWT.
 
-Правила доступа:
-- пользователь может создавать объявления и комментарии с ролью `USER`
-- владелец объявления или администратор может обновлять, закрывать и удалять объявление
-- владелец комментария или администратор может удалить комментарий
-- владелец изображения или администратор может удалить изображение
-- пользователь может читать и обновлять свой профиль; администратор может удалять пользователей
+Основные правила доступа:
+- пользователь с ролью `USER` может создавать объявления и комментарии
+- владелец объявления может обновлять, закрывать и удалять своё объявление
+- владелец комментария может удалить свой комментарий
+- владелец изображения может удалить своё изображение
+- пользователь может читать и обновлять свой профиль
+- администратор может удалять пользователей
 - категории создаёт, обновляет и удаляет только администратор
 
 ## Поведение сервиса
 
-- при создании объявления статус автоматически ставится в `ACTIVE`
+- при создании объявления статус автоматически устанавливается в `ACTIVE`
 - если `minPrice > maxPrice`, API возвращает `400 Bad Request`
 - при удалении объявления сервис сначала удаляет связанные изображения из `Yandex Disk`, затем запись из БД
-- изображения не хранятся локально: файл публикуется в `Yandex Disk`, а в БД сохраняются `url`, `path`, `sortOrder`
-- после успешной регистрации публикуется `UserRegisteredEvent`, и после commit отправляется welcome-email
+- изображения не хранятся локально: в БД сохраняются метаданные, а файл публикуется в `Yandex Disk`
+- после успешной регистрации публикуется `UserRegisteredEvent`, а welcome email отправляется после commit транзакции
 
 ## Конфигурация
 
-Основной конфиг находится в [application.yaml](AdBoard/src/main/resources/application.yaml).
+Основной конфиг находится в [src/main/resources/application.yaml](src/main/resources/application.yaml).
 
 Минимальный набор переменных окружения:
 
@@ -100,7 +104,7 @@ SERVER_PORT=8081
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=adboard_db
-POSTGRES_USER=user
+POSTGRES_USER=postgres
 POSTGRES_PASSWORD=password
 
 KEYCLOAK_HOST=localhost
@@ -110,7 +114,7 @@ KEYCLOAK_CLIENT_ID=adboard-client
 KEYCLOAK_CLIENT_SECRET=your-client-secret
 KEYCLOAK_ISSUER_URI=http://localhost:9090/realms/adboard
 KEYCLOAK_JWK_SET_URI=http://localhost:9090/realms/adboard/protocol/openid-connect/certs
-KEYCLOAK_ADMIN_USERNAME=admin_username
+KEYCLOAK_ADMIN_USERNAME=admin
 KEYCLOAK_ADMIN_PASSWORD=admin_password
 KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
 
@@ -124,8 +128,6 @@ MAIL_PORT=587
 MAIL_USERNAME=no-reply@example.com
 MAIL_PASSWORD=mail-password
 ```
-
-Не коммитьте реальные секреты. Для локальной разработки удобнее использовать `.env`.
 
 ## Локальный запуск
 
@@ -171,7 +173,19 @@ macOS / Linux:
 .\gradlew.bat build
 ```
 
-## Swagger и контракт API
+HTML-отчёт JaCoCo:
+
+```powershell
+.\gradlew.bat jacocoTestReport
+```
+
+Проверка порога покрытия:
+
+```powershell
+.\gradlew.bat check
+```
+
+## API документация
 
 Swagger UI:
 - `http://localhost:8081/swagger-ui.html`
@@ -179,9 +193,6 @@ Swagger UI:
 
 OpenAPI JSON:
 - `http://localhost:8081/v3/api-docs`
-
-Тестовый контракт API:
-- [api-contract.yaml](AdBoard/src/test/resources/contracts/api-contract.yaml)
 
 ## Основные endpoints
 
@@ -196,7 +207,7 @@ OpenAPI JSON:
 
 - `GET /v1/advertisements`
 - `GET /v1/advertisements/{id}`
-- `POST /v1/advertisements/create`
+- `POST /v1/advertisements`
 - `PUT /v1/advertisements/{id}`
 - `PATCH /v1/advertisements/{id}/status`
 - `DELETE /v1/advertisements/{id}`
@@ -211,14 +222,14 @@ OpenAPI JSON:
 
 - `GET /v1/categories`
 - `GET /v1/categories/{id}`
-- `POST /v1/categories/create`
+- `POST /v1/categories`
 - `PUT /v1/categories/{id}`
 - `DELETE /v1/categories/{id}`
 
 ### Comments
 
 - `GET /v1/advertisements/{advertisementId}/comments`
-- `POST /v1/advertisements/{advertisementId}/comments/create`
+- `POST /v1/advertisements/{advertisementId}/comments`
 - `DELETE /v1/advertisements/{advertisementId}/comments/{id}`
 
 ### Images
@@ -276,7 +287,7 @@ Content-Type: application/json
 ### Создание объявления
 
 ```http
-POST /v1/advertisements/create
+POST /v1/advertisements
 Authorization: Bearer <access_token>
 Content-Type: application/json
 
@@ -313,16 +324,9 @@ Content-Type: application/json
 ## База данных
 
 Для схемы БД используются Flyway-миграции:
-- `V1__create_enum_types.sql`
-- `V2__create_tables.sql`
-- `V3__create_indexes.sql`
-- `V4__create_triggers.sql`
+
+- `V1__create_tables.sql`
+- `V2__create_indexes.sql`
+- `V3__create_triggers.sql`
 
 Hibernate работает в режиме `ddl-auto=validate`, поэтому схема должна соответствовать SQL-миграциям.
-## Test Coverage
-
-Проект использует `JaCoCo` для проверки покрытия тестами.
-
-- Минимальное покрытие для сборки: `60%` line coverage
-- Генерация отчета: `.\gradlew.bat jacocoTestReport`
-- Проверка порога покрытия: `.\gradlew.bat check`
