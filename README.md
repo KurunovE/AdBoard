@@ -90,12 +90,7 @@ Backend-сервис доски объявлений на `Spring Boot`.
 
 ## Конфигурация
 
-Основной конфиг находится в [application.yaml](/C:/Users/eegor/Desktop/project/AdBoard/src/main/resources/application.yaml).
-
-По умолчанию приложение запускается с профилем:
-- `local`
-
-Отдельного `application-local.yaml` сейчас в репозитории нет, поэтому локальные значения ожидаются через переменные окружения или `.env`.
+Основной конфиг находится в [application.yaml](AdBoard/src/main/resources/application.yaml).
 
 Минимальный набор переменных окружения:
 
@@ -186,7 +181,7 @@ OpenAPI JSON:
 - `http://localhost:8081/v3/api-docs`
 
 Тестовый контракт API:
-- [api-contract.yaml](/C:/Users/eegor/Desktop/project/AdBoard/src/test/resources/contracts/api-contract.yaml)
+- [api-contract.yaml](AdBoard/src/test/resources/contracts/api-contract.yaml)
 
 ## Основные endpoints
 
