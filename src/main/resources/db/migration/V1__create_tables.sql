@@ -40,14 +40,14 @@ CREATE TABLE categories
 CREATE TABLE advertisements
 (
     id          BIGSERIAL PRIMARY KEY,
-    title       VARCHAR(200)         NOT NULL,
+    title       VARCHAR(200)   NOT NULL,
     description TEXT,
-    price       NUMERIC(15, 2)       NOT NULL,
-    status      advertisement_status NOT NULL DEFAULT 'ACTIVE',
-    author_id   BIGINT               NOT NULL,
-    category_id BIGINT               NOT NULL,
-    created_at  TIMESTAMP            NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMP            DEFAULT NOW(),
+    price       NUMERIC(15, 2) NOT NULL,
+    status      VARCHAR(20)    NOT NULL,
+    author_id   BIGINT         NOT NULL,
+    category_id BIGINT         NOT NULL,
+    created_at  TIMESTAMP      NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMP               DEFAULT NOW(),
 
     CONSTRAINT fk_advertisements_author_id
         FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE,

@@ -1,1 +1,0 @@
-CREATE TYPE advertisement_status AS ENUM ('ACTIVE', 'CLOSED');
