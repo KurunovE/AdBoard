@@ -5,6 +5,9 @@ spring:
   application:
     name: AdBoard
 
+  profiles:
+    active: local
+
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
     username: ${POSTGRES_USER}
@@ -37,6 +40,7 @@ jwt:
   auth:
     converter:
       resource-id: adboard-client
+      principle-attribute: preferred_username
 
 logging:
   level:
